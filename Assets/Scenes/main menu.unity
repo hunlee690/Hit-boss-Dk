@@ -2781,7 +2781,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -12887,6 +12887,10 @@ PrefabInstance:
     - target: {fileID: 2811032630658427732, guid: 4bf9686ad208b784789090896cf9bbff, type: 3}
       propertyPath: m_Name
       value: Player set up
+      objectReference: {fileID: 0}
+    - target: {fileID: 5371532626220869122, guid: 4bf9686ad208b784789090896cf9bbff, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5541858659452132318, guid: 4bf9686ad208b784789090896cf9bbff, type: 3}
       propertyPath: runAnimationSpeed
