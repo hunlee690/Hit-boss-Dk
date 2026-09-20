@@ -37,7 +37,7 @@ namespace HitBoss.Multiplayer
         };
         public static string Property(ISession room, string key) => room != null && room.Properties.TryGetValue(key, out var p) ? p.Value : "";
         public static string PlayerValue(IReadOnlyPlayer player, string key) => player.Properties.TryGetValue(key, out var p) ? p.Value : "";
-        public static bool IsReady(ISession room, IReadOnlyPlayer player) => player.Id == room.Host || PlayerValue(player, "ready") == Property(room, "revision");
+        public static bool IsReady(ISession room, IReadOnlyPlayer player) => player.Id == room.Host || !string.IsNullOrEmpty(Property(room, "revision")) && PlayerValue(player, "ready") == Property(room, "revision");
         public static async Task SetReadyAsync(ISession room, bool ready)
         {
             room.CurrentPlayer.SetProperty("ready", new PlayerProperty(ready ? Property(room, "revision") : "", VisibilityPropertyOptions.Member));

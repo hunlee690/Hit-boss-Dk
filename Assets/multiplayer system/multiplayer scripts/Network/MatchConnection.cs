@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
@@ -17,20 +18,31 @@ namespace HitBoss.Multiplayer
         public NetworkModeRules ActiveRules { get; private set; }
         GameObject menuRig;
         bool callbacksBound, returning, quitting;
-        public void BindMenu(GameObject rig) { menuRig = rig; returning = false; }
+        public void BindMenu(GameObject rig)
+        {
+            // Scene synchronization may recreate the menu; keep only its current preview rig.
+            if (menuRig != null && menuRig != rig) { menuRig.SetActive(false); Destroy(menuRig); }
+            menuRig = rig; returning = false;
+        }
 
         void Awake()
         {
             Instance = this;
             SceneManager.sceneLoaded += SceneLoaded;
             network.OnClientDisconnectCallback += ClientDisconnected;
+            network.OnServerStarted += BindSceneCallbacks;
+        }
+        void BindSceneCallbacks()
+        {
+            if (callbacksBound || network.SceneManager == null) return;
+            network.SceneManager.OnLoadEventCompleted += LoadCompleted;
+            callbacksBound = true;
         }
         void Update()
         {
             if (network.IsListening && !callbacksBound)
             {
-                network.SceneManager.OnLoadEventCompleted += LoadCompleted;
-                callbacksBound = true;
+                BindSceneCallbacks();
             }
             if (!network.IsListening) callbacksBound = false;
             if (RoomManager.Instance != null && RoomManager.Instance.InMatch && Keyboard.current?.escapeKey.wasPressedThisFrame == true)
@@ -39,18 +51,20 @@ namespace HitBoss.Multiplayer
                 Cursor.lockState = unlock ? CursorLockMode.None : CursorLockMode.Locked; Cursor.visible = unlock;
             }
         }
-        public async Task WaitForPlayersAsync(int count)
+        public async Task WaitForPlayersAsync(int count, CancellationToken cancellation)
         {
             var deadline = Time.realtimeSinceStartup + 25;
             while (!network.IsHost || network.ConnectedClients.Count < count)
             {
                 if (Time.realtimeSinceStartup > deadline) throw new InvalidOperationException("A player could not connect. Please ready up and try again.");
-                await Task.Delay(100);
+                await Task.Delay(100, cancellation);
             }
+            cancellation.ThrowIfCancellationRequested();
         }
         public void LoadMode(MultiplayerMode mode)
         {
             if (!network.IsHost) throw new InvalidOperationException("Only the host can start a match.");
+            BindSceneCallbacks();
             if (!Application.CanStreamedLevelBeLoaded(mode.sceneName)) throw new InvalidOperationException("This mode's scene is missing from the build.");
             var status = network.SceneManager.LoadScene(mode.sceneName, LoadSceneMode.Single);
             if (status != SceneEventProgressStatus.Started) throw new InvalidOperationException("Scene loading could not start: " + status);
@@ -81,15 +95,19 @@ namespace HitBoss.Multiplayer
         {
             if (quitting || returning || RoomManager.Instance?.Room == null) return;
             if (!network.IsServer && id == network.LocalClientId)
-            { await RoomManager.Instance.LeaveAsync(); RoomManager.Instance.SetStatus("Disconnected from the host."); }
+            { await RoomManager.Instance.HandleDisconnectAsync(); }
         }
-        public void ReturnToMenu()
+        public async Task ReturnToMenuAsync()
         {
             returning = true;
             if (ActiveRules != null && network.IsServer) ActiveRules.EndServerMatch();
-            if (network.IsListening) network.Shutdown();
             if (callbacksBound && network.SceneManager != null) network.SceneManager.OnLoadEventCompleted -= LoadCompleted;
             callbacksBound = false;
+            if (network.IsListening) network.Shutdown();
+            // NGO shuts down at the end of a frame. Do not let it destroy a newly loaded menu.
+            while (!quitting && network != null && network.ShutdownInProgress) await Task.Delay(30);
+            if (quitting || this == null) return;
+            ActiveRules = null;
             Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
             if (SceneManager.GetActiveScene().name != menuScene) SceneManager.LoadScene(menuScene);
             else returning = false;
@@ -97,7 +115,7 @@ namespace HitBoss.Multiplayer
         void OnGUI()
         {
             if (RoomManager.Instance?.InMatch != true) return;
-            GUI.Box(new Rect(16, 16, 330, 60), "Online free play • " + RoomManager.Instance.Mode.displayName + "\nEsc: show cursor • combat rules coming next");
+            GUI.Box(new Rect(16, 16, 330, 60), "Online free play • " + (RoomManager.Instance.Mode?.displayName ?? "Room") + "\nEsc: show cursor • combat rules coming next");
             if (Cursor.lockState == CursorLockMode.None && GUI.Button(new Rect(24, 82, 140, 36), "Leave room")) _ = RoomManager.Instance.LeaveAsync();
         }
         void OnApplicationQuit() { quitting = true; }
@@ -105,6 +123,7 @@ namespace HitBoss.Multiplayer
         {
             SceneManager.sceneLoaded -= SceneLoaded;
             if (network != null) network.OnClientDisconnectCallback -= ClientDisconnected;
+            if (network != null) network.OnServerStarted -= BindSceneCallbacks;
             if (Instance == this) Instance = null;
         }
     }

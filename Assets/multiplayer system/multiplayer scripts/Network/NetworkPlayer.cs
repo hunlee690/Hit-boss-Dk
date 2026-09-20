@@ -12,6 +12,7 @@ namespace HitBoss.Multiplayer
         public PlayerCamera playerCamera;
         public MatchParticipant participant;
         public readonly NetworkVariable<FixedString128Bytes> Username = new NetworkVariable<FixedString128Bytes>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+        public readonly NetworkVariable<bool> Skating = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
         Rigidbody body;
 
         void Awake()
@@ -46,12 +47,20 @@ namespace HitBoss.Multiplayer
                 Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false;
             }
             Username.OnValueChanged += NameChanged;
+            Skating.OnValueChanged += SkateChanged;
+            if (IsOwner) Skating.Value = mode.skating;
+            else SkateChanged(false, Skating.Value);
             NameChanged(default, Username.Value);
         }
+        void LateUpdate()
+        {
+            if (IsSpawned && IsOwner && Skating.Value != movement.IsSkateMode) Skating.Value = movement.IsSkateMode;
+        }
+        void SkateChanged(bool previous, bool next) { if (!IsOwner) movement.SetSkateMode(next); }
         void NameChanged(FixedString128Bytes previous, FixedString128Bytes next)
         {
             participant.playerName = next.ToString(); participant.RefreshName();
         }
-        public override void OnNetworkDespawn() { Username.OnValueChanged -= NameChanged; }
+        public override void OnNetworkDespawn() { Username.OnValueChanged -= NameChanged; Skating.OnValueChanged -= SkateChanged; }
     }
 }

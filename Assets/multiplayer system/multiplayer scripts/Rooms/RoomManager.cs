@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using HitBoss.Social;
 using Unity.Services.Friends;
@@ -22,11 +23,12 @@ namespace HitBoss.Multiplayer
         public readonly List<RoomInvitation> Invitations = new List<RoomInvitation>();
         public event Action Changed;
         public bool IsHost => Room != null && Room.IsHost;
-        public MultiplayerMode Mode => modes.FirstOrDefault(m => m.modeId == UnityRoomService.Property(Room, "mode"));
+        public MultiplayerMode Mode => modes.FirstOrDefault(m => m != null && m.modeId == UnityRoomService.Property(Room, "mode"));
         public bool InMatch => Room != null && UnityRoomService.Property(Room, "phase") == "playing";
-        public bool CanStart => !Busy && IsHost && Mode != null && Room.PlayerCount >= Mode.minPlayers && Room.PlayerCount <= Mode.maxPlayers && Room.Players.All(p => UnityRoomService.IsReady(Room, p));
+        public bool CanStart => !Busy && IsHost && !Room.IsLocked && Mode != null && Room.PlayerCount >= Mode.minPlayers && Room.PlayerCount <= Mode.maxPlayers && Room.Players.All(p => UnityRoomService.IsReady(Room, p));
         UnityRoomService service;
-        bool listening, leaving;
+        bool listening, leaving, refreshing, quitting;
+        CancellationTokenSource roomLifetime;
         string originalHost;
         float nextRefresh;
         readonly Dictionary<string, float> inviteTimes = new Dictionary<string, float>();
@@ -43,7 +45,7 @@ namespace HitBoss.Multiplayer
                 FriendsService.Instance.MessageReceived += ReceiveInvite; listening = true;
             }
             if (Invitations.RemoveAll(i => i.Expired) > 0) Notify();
-            if (Room != null && !Busy && Time.unscaledTime >= nextRefresh) { nextRefresh = Time.unscaledTime + 12; RefreshQuietly(); }
+            if (Room != null && !Busy && !refreshing && Time.unscaledTime >= nextRefresh) { nextRefresh = Time.unscaledTime + 12; RefreshQuietly(); }
         }
         public void Notify() => Changed?.Invoke();
         public void SetStatus(string text) { Status = text; Notify(); }
@@ -54,9 +56,10 @@ namespace HitBoss.Multiplayer
         }
         public async Task RunAsync(Func<Task> action)
         {
-            if (Busy) return;
+            if (Busy || leaving || quitting) return;
             Busy = true; Notify();
             try { await action(); }
+            catch (OperationCanceledException) { }
             catch (Exception e)
             {
                 Debug.LogWarning("[Rooms] " + e.GetType().Name + ": " + e.Message);
@@ -68,6 +71,7 @@ namespace HitBoss.Multiplayer
         {
             RequireAccount(); if (Room != null) throw new InvalidOperationException("Leave your current room first.");
             if (index < 0 || index >= modes.Length) throw new ArgumentException("Select a mode.");
+            modes[index].ValidateConfiguration();
             SetStatus("Creating private room…");
             Attach(await service.CreateAsync(modes[index], OnlineManager.Instance.Profiles.Current.username));
             SetStatus("Room created. Invite friends or share the code.");
@@ -77,33 +81,37 @@ namespace HitBoss.Multiplayer
             RequireAccount(); if (Room != null) throw new InvalidOperationException("Leave your current room before joining another.");
             SetStatus("Joining room…");
             var joined = await service.JoinAsync(code, OnlineManager.Instance.Profiles.Current.username);
-            if (UnityRoomService.Property(joined, "version") != UnityRoomService.Version || !modes.Any(m => m.modeId == UnityRoomService.Property(joined, "mode")) || joined.IsLocked)
+            if (UnityRoomService.Property(joined, "version") != UnityRoomService.Version || !modes.Any(m => m != null && m.modeId == UnityRoomService.Property(joined, "mode")) || joined.IsLocked || UnityRoomService.Property(joined, "phase") != "room")
             { await joined.LeaveAsync(); throw new InvalidOperationException("This room has started or uses a different game version."); }
             Attach(joined); SetStatus("Joined. Press Ready when you are ready to play.");
         });
         void Attach(ISession room)
         {
             Room = room; originalHost = room.Host; nextRefresh = Time.unscaledTime + 12;
+            roomLifetime = new CancellationTokenSource();
             Room.Changed += RoomChanged; Room.Deleted += RoomEnded; Room.RemovedFromSession += RoomEnded;
             Room.SessionHostChanged += HostChanged; Notify();
         }
         void Detach()
         {
             if (Room == null) return;
+            roomLifetime?.Cancel(); roomLifetime?.Dispose(); roomLifetime = null;
             Room.Changed -= RoomChanged; Room.Deleted -= RoomEnded; Room.RemovedFromSession -= RoomEnded; Room.SessionHostChanged -= HostChanged; Room = null;
         }
         void RoomChanged() { Notify(); }
         void HostChanged(string id) { if (id != originalHost) RoomEnded(); }
         async void RoomEnded()
         {
-            if (leaving) return;
+            if (leaving || quitting) return;
             await LeaveCoreAsync(); SetStatus("The host closed the room or disconnected. Create or join another room.");
         }
         async void RefreshQuietly()
         {
             var room = Room;
+            refreshing = true;
             try { if (room != null) await room.RefreshAsync(); }
             catch { if (Room == room) SetStatus("Room connection interrupted. Retry or leave the room."); }
+            finally { refreshing = false; }
         }
         public Task RefreshAsync() => RunAsync(async () => { if (Room != null) await Room.RefreshAsync(); SetStatus("Room refreshed."); });
         public Task ReadyAsync() => RunAsync(async () =>
@@ -114,35 +122,51 @@ namespace HitBoss.Multiplayer
         public Task SelectModeAsync(int index) => RunAsync(async () =>
         {
             if (!IsHost || Room.IsLocked || index < 0 || index >= modes.Length) return;
+            modes[index].ValidateConfiguration();
             if (Room.PlayerCount > modes[index].maxPlayers) throw new InvalidOperationException("There are too many players for this mode.");
+            if (Room.MaxPlayers < modes[index].minPlayers) throw new InvalidOperationException("Create a new room for this mode's larger player requirement.");
             await UnityRoomService.SetModeAsync(Room.AsHost(), modes[index]); SetStatus("Mode changed. Everyone must ready up again.");
         });
         public Task StartMatchAsync() => RunAsync(async () =>
         {
-            if (!IsHost) return;
-            await Room.RefreshAsync();
+            if (!IsHost || Room.IsLocked) return;
+            var host = Room.AsHost();
+            var cancellation = roomLifetime.Token;
+            await host.RefreshAsync(); cancellation.ThrowIfCancellationRequested();
             var selected = Mode;
             if (selected == null || Room.PlayerCount < selected.minPlayers || Room.PlayerCount > selected.maxPlayers || !Room.Players.All(p => UnityRoomService.IsReady(Room, p)))
                 throw new InvalidOperationException("Wait for the required players and everyone to be ready.");
-            var host = Room.AsHost();
-            host.IsLocked = true; await host.SavePropertiesAsync();
+            selected.ValidateConfiguration();
             try
             {
+                host.IsLocked = true; await host.SavePropertiesAsync(); cancellation.ThrowIfCancellationRequested();
+                await host.RefreshAsync(); cancellation.ThrowIfCancellationRequested();
+                if (host.PlayerCount < selected.minPlayers || host.PlayerCount > selected.maxPlayers || !host.Players.All(p => UnityRoomService.IsReady(host, p)))
+                    throw new InvalidOperationException("The player list or ready state changed. Ready up and try again.");
                 SetStatus("Connecting players…");
-                await host.Network.StartRelayNetworkAsync(new RelayNetworkOptions());
-                await connection.WaitForPlayersAsync(host.PlayerCount);
+                await host.Network.StartRelayNetworkAsync(new RelayNetworkOptions()); cancellation.ThrowIfCancellationRequested();
+                await connection.WaitForPlayersAsync(host.PlayerCount, cancellation);
                 host.SetProperty("phase", new SessionProperty("playing", VisibilityPropertyOptions.Member));
-                await host.SavePropertiesAsync();
+                await host.SavePropertiesAsync(); cancellation.ThrowIfCancellationRequested();
                 connection.LoadMode(selected);
                 SetStatus("Match started.");
             }
             catch
             {
-                try { await host.Network.StopNetworkAsync(); host.IsLocked = false; host.SetProperty("phase", new SessionProperty("room", VisibilityPropertyOptions.Member)); await host.SavePropertiesAsync(); } catch { }
+                if (!cancellation.IsCancellationRequested)
+                {
+                    try { await host.Network.StopNetworkAsync(); } catch { }
+                    try { host.IsLocked = false; host.SetProperty("phase", new SessionProperty("room", VisibilityPropertyOptions.Member)); await host.SavePropertiesAsync(); } catch { }
+                }
                 throw;
             }
         });
         public Task LeaveAsync() => RunAsync(async () => { await LeaveCoreAsync(); SetStatus("You left the room."); });
+        public async Task HandleDisconnectAsync()
+        {
+            if (leaving || quitting || Room == null) return;
+            await LeaveCoreAsync(); SetStatus("Disconnected from the host. Create or join another room.");
+        }
         async Task LeaveCoreAsync()
         {
             if (leaving) return;
@@ -153,7 +177,7 @@ namespace HitBoss.Multiplayer
                 if (old != null) { if (old.IsHost) await old.AsHost().DeleteAsync(); else await old.LeaveAsync(); }
             }
             catch (Exception e) { Debug.LogWarning("[Rooms] Leave: " + e.Message); }
-            finally { connection.ReturnToMenu(); leaving = false; Notify(); }
+            finally { await connection.ReturnToMenuAsync(); leaving = false; Notify(); }
         }
         public Task InviteAsync(string playerId) => RunAsync(async () =>
         {
@@ -180,6 +204,7 @@ namespace HitBoss.Multiplayer
             catch (Exception e) { Debug.LogWarning("[Rooms] Ignored invalid invitation: " + e.GetType().Name); }
         }
         public void Dismiss(RoomInvitation invitation) { Invitations.Remove(invitation); Notify(); }
+        void OnApplicationQuit() { quitting = true; roomLifetime?.Cancel(); }
         void OnDestroy()
         {
             if (Instance != this) return;

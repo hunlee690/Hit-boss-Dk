@@ -13,13 +13,13 @@ Open the main menu and use the existing Matter button. Create a private room, sh
 - `multiplayer prefabs`: shared runtime manager, network player, rule adapter and row.
 - `multiplayer modes`: definitions linked to the three existing scenes.
 
-To add a mode, create a Multiplayer Mode asset, give it a stable unique ID, set its scene/player limits, assign a rules prefab derived from NetworkModeRules, and add it to the Multiplayer Manager prefab's modes array. Include the scene in Build Settings. The room menu automatically includes the new definition. Keep combat, scoring, teams and winning logic in the mode adapter, with server-authoritative network state. Room and invitation code should not need changes.
+To add a mode, create a Multiplayer Mode asset, give it a stable unique ID, set its scene/player limits, assign a rules prefab derived from NetworkModeRules, and add it to the Multiplayer Manager prefab's modes array. Include the scene in Build Settings. The room menu automatically includes the new definition. Keep combat, scoring, teams and winning logic in the mode adapter, with server-authoritative network state. Room and invitation code should not need changes. A room's capacity is fixed when it is created: the menu shows the lower of that capacity and the selected mode's limit. Create a fresh room if a new mode requires more players than that capacity. The first adapter reuses skate-mode spawn points; other maps use a ground-projected origin fallback. New mode adapters should supply their own authored spawn positions.
 
 ## Current scope
 
 The initial shared-movement adapter supports online free play in the existing scenes. Local AI/match managers and player combat/throwables are disabled online because they are not network-authoritative. Networked damage, ragdolls, bombs, scores, match results and remote cosmetic choices are not implemented in this pass. Offline play retains its existing mode managers. Private-room profile progression must not be used for a trusted ranked economy until authoritative results exist.
 
-The Unity project uses the previously linked production Authentication/Friends setup plus Multiplayer Services 2.3.3, Netcode for GameObjects 2.13.2 and Unity Transport. Relay allocations start when the host starts a match. No paid service upgrade was enrolled. Cloud Lobby/Relay runtime access still needs your live verification.
+The Unity project uses the previously linked production Authentication/Friends setup plus Multiplayer Services 2.3.3, Netcode for GameObjects 2.13.2 and Unity Transport. Lobby's dashboard setup is complete and explicitly reports that the service is enabled; Relay's production dashboard is accessible. Relay allocations start when the host starts a match. No paid service upgrade was enrolled. Cloud service runtime behavior still needs your live verification.
 
 ## Your play-test checklist
 

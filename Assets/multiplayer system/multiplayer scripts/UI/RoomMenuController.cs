@@ -68,7 +68,7 @@ namespace HitBoss.Multiplayer
             bool inRoom = room != null;
             if (inRoom && manager.Mode != null) selectedMode = Array.IndexOf(manager.modes, manager.Mode);
             var selected = manager.modes.Length > 0 ? manager.modes[Mathf.Clamp(selectedMode, 0, manager.modes.Length - 1)] : null;
-            modeText.text = selected != null ? selected.displayName + "  •  " + selected.minPlayers + "–" + selected.maxPlayers + " players" : "No modes configured";
+            modeText.text = selected != null ? selected.displayName + "  •  " + selected.minPlayers + "–" + (inRoom ? Math.Min(selected.maxPlayers, room.MaxPlayers) : selected.maxPlayers) + " players" : "No modes configured";
             previousMode.interactable = nextMode.interactable = !manager.Busy && (!inRoom || manager.IsHost && !room.IsLocked);
             statusText.text = manager.Status;
             createArea.SetActive(!inRoom); roomArea.SetActive(inRoom);
