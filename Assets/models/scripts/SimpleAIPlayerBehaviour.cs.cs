@@ -75,11 +75,11 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
         if (combat == null)
             combat = GetComponent<CombatController>();
 
+
         participant =
             GetComponent<MatchParticipant>();
 
 
-        // AI never reads human keyboard input.
         if (playerController != null)
             playerController.enabled = false;
 
@@ -116,8 +116,11 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
             return;
 
 
-        attackTimer -= Time.deltaTime;
-        targetTimer -= Time.deltaTime;
+        attackTimer -=
+            Time.deltaTime;
+
+        targetTimer -=
+            Time.deltaTime;
 
 
         if (targetTimer <= 0f)
@@ -142,22 +145,22 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
     // =====================================================
 
     void FixedUpdate()
-{
-    if (stats == null ||
-        stats.IsDead)
-        return;
+    {
+        if (stats == null ||
+            stats.IsDead)
+            return;
 
 
-    if (rb != null)
-        rb.angularVelocity = Vector3.zero;
+        if (rb != null)
+            rb.angularVelocity = Vector3.zero;
 
 
-    Move();
+        Move();
 
 
-    if (rb != null)
-        rb.angularVelocity = Vector3.zero;
-}
+        if (rb != null)
+            rb.angularVelocity = Vector3.zero;
+    }
 
 
     // =====================================================
@@ -166,10 +169,6 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
 
     void DecideBehaviour()
     {
-        // -------------------------------------------------
-        // LOW STAMINA = FIND STAMINA BOX
-        // -------------------------------------------------
-
         if (stats.Stamina <= seekStaminaAt)
         {
             if (targetPickup != null)
@@ -187,10 +186,6 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
         }
 
 
-        // -------------------------------------------------
-        // HAVE STAMINA = HUNT PLAYER
-        // -------------------------------------------------
-
         if (targetPlayer == null)
         {
             Wander();
@@ -202,10 +197,17 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
             targetPlayer.GetComponent<CombatStats>();
 
 
+        RagdollController targetRagdoll =
+            targetPlayer.GetComponent<RagdollController>();
+
+
         if (targetStats == null ||
-            targetStats.IsDead)
+            targetStats.IsDead ||
+            (targetRagdoll != null &&
+             targetRagdoll.IsRagdolled))
         {
             targetPlayer = null;
+            moveDirection = Vector3.zero;
             return;
         }
 
@@ -216,10 +218,6 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
                 targetPlayer.transform.position
             );
 
-
-        // -------------------------------------------------
-        // ATTACK
-        // -------------------------------------------------
 
         if (distance <= attackDistance)
         {
@@ -239,10 +237,6 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
             return;
         }
 
-
-        // -------------------------------------------------
-        // CHASE
-        // -------------------------------------------------
 
         MoveTowards(
             targetPlayer.transform.position
@@ -264,23 +258,13 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
         bool attacked = false;
 
 
-        // Full stamina:
-        // usually punch, sometimes slide.
         if (stats.Stamina >= 3)
         {
             if (Random.value <= punchChance)
-            {
-                attacked =
-                    combat.TryPunch();
-            }
+                attacked = combat.TryPunch();
             else
-            {
-                attacked =
-                    combat.TrySlide();
-            }
+                attacked = combat.TrySlide();
         }
-
-        // 2 stamina = slide.
         else if (stats.Stamina >= 2)
         {
             attacked =
@@ -297,7 +281,7 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
 
 
     // =====================================================
-    // FIND TARGET
+    // TARGETS
     // =====================================================
 
     void RefreshTarget()
@@ -306,7 +290,6 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
             return;
 
 
-        // Low stamina = pickup target.
         if (stats.Stamina <= seekStaminaAt)
         {
             targetPlayer = null;
@@ -317,16 +300,11 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
         }
 
 
-        // Enough stamina = enemy target.
         targetPickup = null;
 
         FindNearestPlayer();
     }
 
-
-    // =====================================================
-    // NEAREST PLAYER
-    // =====================================================
 
     void FindNearestPlayer()
     {
@@ -346,7 +324,9 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
         {
             if (other == null ||
                 other == participant)
+            {
                 continue;
+            }
 
 
             CombatStats otherStats =
@@ -355,7 +335,20 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
 
             if (otherStats == null ||
                 otherStats.IsDead)
+            {
                 continue;
+            }
+
+
+            RagdollController otherRagdoll =
+                other.GetComponent<RagdollController>();
+
+
+            if (otherRagdoll != null &&
+                otherRagdoll.IsRagdolled)
+            {
+                continue;
+            }
 
 
             float distance =
@@ -381,10 +374,6 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
             nearest;
     }
 
-
-    // =====================================================
-    // NEAREST STAMINA
-    // =====================================================
 
     void FindNearestStamina()
     {
@@ -432,10 +421,11 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
 
 
     // =====================================================
-    // MOVE TOWARD POSITION
+    // MOVEMENT
     // =====================================================
 
-    void MoveTowards(Vector3 position)
+    void MoveTowards(
+        Vector3 position)
     {
         Vector3 direction =
             position -
@@ -453,10 +443,6 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
         }
     }
 
-
-    // =====================================================
-    // WANDER
-    // =====================================================
 
     void Wander()
     {
@@ -477,10 +463,6 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
             );
     }
 
-
-    // =====================================================
-    // MOVE
-    // =====================================================
 
     void Move()
     {
@@ -509,6 +491,7 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
             rb.linearVelocity =
                 stopVelocity;
 
+
             return;
         }
 
@@ -527,10 +510,12 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
 
 
         velocity.x =
-            direction.x * speed;
+            direction.x *
+            speed;
 
         velocity.z =
-            direction.z * speed;
+            direction.z *
+            speed;
 
 
         rb.linearVelocity =
@@ -555,11 +540,8 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
     }
 
 
-    // =====================================================
-    // FACE TARGET
-    // =====================================================
-
-    void FacePosition(Vector3 position)
+    void FacePosition(
+        Vector3 position)
     {
         Vector3 direction =
             position -
@@ -591,7 +573,7 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
 
 
     // =====================================================
-    // OBSTACLE AVOIDANCE
+    // OBSTACLES
     // =====================================================
 
     void AvoidObstacles()
@@ -725,6 +707,7 @@ public class SimpleAIPlayerBehaviour : MonoBehaviour
             "SkateX",
             0f
         );
+
 
         animator.SetFloat(
             "SkateY",

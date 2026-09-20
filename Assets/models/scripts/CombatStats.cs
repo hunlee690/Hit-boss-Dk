@@ -20,8 +20,15 @@ public class CombatStats : MonoBehaviour
     public event Action<int, int> OnStaminaChanged;
 
 
+    RagdollController ragdoll;
+
+
     void Awake()
     {
+        ragdoll =
+            GetComponentInParent<RagdollController>();
+
+
         ResetStats();
     }
 
@@ -55,14 +62,17 @@ public class CombatStats : MonoBehaviour
     // STAMINA
     // =====================================================
 
-    public bool HasStamina(int amount)
+    public bool HasStamina(
+        int amount)
     {
-        return !IsDead &&
-               Stamina >= amount;
+        return
+            !IsDead &&
+            Stamina >= amount;
     }
 
 
-    public bool UseStamina(int amount)
+    public bool UseStamina(
+        int amount)
     {
         if (!HasStamina(amount))
             return false;
@@ -81,7 +91,8 @@ public class CombatStats : MonoBehaviour
     }
 
 
-    public void AddStamina(int amount)
+    public void AddStamina(
+        int amount)
     {
         if (IsDead)
             return;
@@ -114,7 +125,17 @@ public class CombatStats : MonoBehaviour
             return;
 
 
+        // Fallen characters cannot be repeatedly damaged
+        // until they get back up.
+        if (ragdoll != null &&
+            ragdoll.IsRagdolled)
+        {
+            return;
+        }
+
+
         Health -= amount;
+
 
         Health =
             Mathf.Max(
@@ -130,7 +151,9 @@ public class CombatStats : MonoBehaviour
 
 
         if (Health <= 0)
+        {
             Die(attacker);
+        }
     }
 
 
@@ -138,13 +161,32 @@ public class CombatStats : MonoBehaviour
     // DEATH
     // =====================================================
 
-    void Die(CombatStats attacker)
+    void Die(
+        CombatStats attacker)
     {
         if (IsDead)
             return;
 
 
         IsDead = true;
+
+
+        if (ragdoll == null)
+        {
+            ragdoll =
+                GetComponentInParent<RagdollController>();
+        }
+
+
+        if (ragdoll != null)
+        {
+            // Permanent until MatchParticipant respawns us.
+            // No artificial force is added.
+            ragdoll.EnterRagdoll(
+                999f,
+                true
+            );
+        }
 
 
         if (GameModeManager.Instance != null)

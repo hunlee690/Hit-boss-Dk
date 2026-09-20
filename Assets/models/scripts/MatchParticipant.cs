@@ -15,44 +15,49 @@ public class MatchParticipant : MonoBehaviour
     public int deaths;
 
     [Header("Optional")]
-    [Tooltip("Assign ONLY the character/model object if you want it hidden while dead.")]
+    [Tooltip("Assign ONLY the character/model object. Keep it visible during death ragdoll.")]
     public GameObject visualRoot;
 
 
     PlayerController playerController;
     SimpleAIPlayerBehaviour aiBehaviour;
+    CombatController combatController;
+    ThrowableInventory throwableInventory;
 
     Rigidbody rb;
-    Collider[] colliders;
-
     bool originalKinematic;
 
 
     void Awake()
     {
         if (nameText == null)
+        {
             nameText =
                 GetComponentInChildren<TMP_Text>(true);
+        }
 
 
         playerController =
             GetComponent<PlayerController>();
 
-
         aiBehaviour =
             GetComponent<SimpleAIPlayerBehaviour>();
 
+        combatController =
+            GetComponent<CombatController>();
+
+        throwableInventory =
+            GetComponent<ThrowableInventory>();
 
         rb =
             GetComponent<Rigidbody>();
 
 
-        colliders =
-            GetComponentsInChildren<Collider>(true);
-
-
         if (rb != null)
-            originalKinematic = rb.isKinematic;
+        {
+            originalKinematic =
+                rb.isKinematic;
+        }
     }
 
 
@@ -64,13 +69,18 @@ public class MatchParticipant : MonoBehaviour
         string newName,
         bool ai)
     {
-        playerName = newName;
-        isAI = ai;
+        playerName =
+            newName;
+
+        isAI =
+            ai;
 
         kills = 0;
         deaths = 0;
 
+
         RefreshName();
+
         SetAlive(true);
     }
 
@@ -82,7 +92,10 @@ public class MatchParticipant : MonoBehaviour
     public void RefreshName()
     {
         if (nameText != null)
-            nameText.text = playerName;
+        {
+            nameText.text =
+                playerName;
+        }
     }
 
 
@@ -93,13 +106,6 @@ public class MatchParticipant : MonoBehaviour
     public void AddKill()
     {
         kills++;
-
-        Debug.Log(
-            playerName +
-            " now has " +
-            kills +
-            " kills."
-        );
     }
 
 
@@ -113,77 +119,105 @@ public class MatchParticipant : MonoBehaviour
     // ALIVE / DEAD
     // =====================================================
 
-    public void SetAlive(bool alive)
+    public void SetAlive(
+        bool alive)
     {
-        // -------------------------
-        // HUMAN CONTROL
-        // -------------------------
-
-        if (playerController != null)
+        if (!alive)
         {
-            if (!alive)
+            if (playerController != null)
+            {
                 playerController.StopImmediately();
 
-            playerController.enabled =
-                alive && !isAI;
-        }
-
-
-        // -------------------------
-        // AI CONTROL
-        // -------------------------
-
-        if (aiBehaviour != null)
-        {
-            aiBehaviour.enabled =
-                alive && isAI;
-        }
-
-
-        // -------------------------
-        // COLLIDERS
-        // -------------------------
-
-        if (colliders != null)
-        {
-            foreach (Collider col in colliders)
-            {
-                if (col != null)
-                    col.enabled = alive;
+                playerController.enabled =
+                    false;
             }
+
+
+            if (aiBehaviour != null)
+            {
+                aiBehaviour.enabled =
+                    false;
+            }
+
+
+            if (combatController != null)
+            {
+                combatController.enabled =
+                    false;
+            }
+
+
+            if (throwableInventory != null)
+            {
+                throwableInventory.enabled =
+                    false;
+            }
+
+
+            // IMPORTANT:
+            // Do NOT disable colliders.
+            // Do NOT hide the model.
+            // Do NOT move the player.
+            // Death ragdoll must remain real physics
+            // where the player actually fell.
+            return;
         }
 
 
-        // -------------------------
-        // RIGIDBODY
-        // -------------------------
+        // =================================================
+        // CALLED ONLY AFTER GAMEMODEMANAGER HAS:
+        // 1. waited for ragdoll to settle
+        // 2. disabled ragdoll physics
+        // 3. moved root to respawn point
+        // 4. reset CombatStats
+        // =================================================
+
+        if (visualRoot != null)
+        {
+            visualRoot.SetActive(
+                true
+            );
+        }
+
 
         if (rb != null)
         {
+            rb.isKinematic =
+                originalKinematic;
+
             rb.linearVelocity =
                 Vector3.zero;
 
             rb.angularVelocity =
                 Vector3.zero;
-
-
-            if (alive)
-            {
-                rb.isKinematic =
-                    originalKinematic;
-            }
-            else
-            {
-                rb.isKinematic = true;
-            }
         }
 
 
-        // -------------------------
-        // OPTIONAL MODEL HIDE
-        // -------------------------
+        if (combatController != null)
+        {
+            combatController.enabled =
+                true;
+        }
 
-        if (visualRoot != null)
-            visualRoot.SetActive(alive);
+
+        if (throwableInventory != null)
+        {
+            throwableInventory.enabled =
+                true;
+        }
+
+
+        if (playerController != null)
+        {
+            playerController.enabled =
+                !isAI;
+        }
+
+
+        if (aiBehaviour != null)
+        {
+            aiBehaviour.enabled =
+                isAI;
+        }
     }
 }

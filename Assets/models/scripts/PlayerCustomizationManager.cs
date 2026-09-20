@@ -20,24 +20,23 @@ public class PlayerCustomizationManager : MonoBehaviour
         [Tooltip("Optional. Button still works without an icon.")]
         public Sprite icon;
 
-        [Tooltip("Tick ONE item per category if it should start equipped.")]
+        [Tooltip("Tick ONE item per category if it should start equipped. A category with a default item can never become empty.")]
         public bool equippedByDefault;
 
-        [Tooltip("Objects belonging to this item.")]
+        [Tooltip("Only put objects belonging to THIS category/item here. Avoid shared parent objects.")]
         public GameObject[] objectsToEnable;
     }
 
     [System.Serializable]
     public class CategoryData
     {
+        [Tooltip("If a default item is ticked, None is automatically disabled for that category.")]
         public bool allowNone = true;
         public CustomizationItem[] items;
     }
 
-
     [Header("Player")]
     public PlayerController playerController;
-
 
     [Header("Category Buttons")]
     public Button headButton;
@@ -45,18 +44,14 @@ public class PlayerCustomizationManager : MonoBehaviour
     public Button bagButton;
     public Button skatesButton;
 
-
     [Header("Scroll View")]
     public Transform itemContent;
     public Button itemButtonPrefab;
 
-
     [Header("Selected Item")]
     public TMP_Text selectedItemNameText;
-
     public Button equipButton;
     public TMP_Text equipButtonText;
-
 
     [Header("Head Accessories")]
     public CategoryData headAccessories;
@@ -70,109 +65,93 @@ public class PlayerCustomizationManager : MonoBehaviour
     [Header("Skates")]
     public CategoryData skates;
 
+    Category currentCategory;
+    bool categoryInitialized;
+    bool initialized;
 
-    private Category currentCategory;
+    int selectedItem = -1;
 
-    private bool categoryInitialized;
-
-    private int selectedItem = -1;
-
-    private int equippedHead = -1;
-    private int equippedBody = -1;
-    private int equippedBag = -1;
-    private int equippedSkates = -1;
+    int equippedHead = -1;
+    int equippedBody = -1;
+    int equippedBag = -1;
+    int equippedSkates = -1;
 
 
     // =====================================================
-    // START
+    // SETUP
     // =====================================================
-private bool initialized;
 
-void Awake()
-{
-    if (headButton != null)
-        headButton.onClick.AddListener(ShowHeadAccessories);
-
-    if (bodyButton != null)
-        bodyButton.onClick.AddListener(ShowBody);
-
-    if (bagButton != null)
-        bagButton.onClick.AddListener(ShowBags);
-
-    if (skatesButton != null)
-        skatesButton.onClick.AddListener(ShowSkates);
-
-    if (equipButton != null)
-        equipButton.onClick.AddListener(ToggleEquip);
-
-    if (equipButtonText == null && equipButton != null)
-        equipButtonText =
-            equipButton.GetComponentInChildren<TMP_Text>(true);
-}
-
-
-void Start()
-{
-    // Backup initialization in case MainMenu didn't call it.
-    InitializeCustomization();
-}
-
-
-public void InitializeCustomization()
-{
-    if (initialized)
-        return;
-
-    initialized = true;
-
-    equippedHead = FindDefaultItem(headAccessories);
-    equippedBody = FindDefaultItem(body);
-    equippedBag = FindDefaultItem(bags);
-    equippedSkates = FindDefaultItem(skates);
-
-    ApplyCategory(headAccessories, equippedHead);
-    ApplyCategory(body, equippedBody);
-    ApplyCategory(bags, equippedBag);
-
-    // Skates stay hidden until skate mode / preview.
-    ApplyCategory(skates, -1);
-
-    ApplyEquippedItemsToPlayer();
-}
-
-public void ApplyEquippedItemsToPlayer()
-{
-    if (playerController == null)
+    void Awake()
     {
-        Debug.LogWarning(
-            "Customization Manager: PlayerController is not assigned!"
-        );
+        if (headButton != null)
+            headButton.onClick.AddListener(ShowHeadAccessories);
 
-        return;
+        if (bodyButton != null)
+            bodyButton.onClick.AddListener(ShowBody);
+
+        if (bagButton != null)
+            bagButton.onClick.AddListener(ShowBags);
+
+        if (skatesButton != null)
+            skatesButton.onClick.AddListener(ShowSkates);
+
+        if (equipButton != null)
+            equipButton.onClick.AddListener(EquipSelectedItem);
+
+        if (equipButtonText == null && equipButton != null)
+            equipButtonText = equipButton.GetComponentInChildren<TMP_Text>(true);
     }
 
-    GameObject[] skateObjects =
-        GetItemObjects(
-            skates,
-            equippedSkates
-        );
+    void Start()
+    {
+        InitializeCustomization();
+    }
 
-    playerController.SetEquippedSkate(
-        skateObjects
-    );
+    public void InitializeCustomization()
+    {
+        if (initialized)
+            return;
 
-    Debug.Log(
-        "Equipped skate index: " +
-        equippedSkates
-    );
-}
+        initialized = true;
+
+        equippedHead = GetStartingItem(headAccessories);
+        equippedBody = GetStartingItem(body);
+        equippedBag = GetStartingItem(bags);
+        equippedSkates = GetStartingItem(skates);
+
+        ApplyCategory(headAccessories, equippedHead);
+        ApplyCategory(body, equippedBody);
+        ApplyCategory(bags, equippedBag);
+
+        // Equipped skates stay hidden until skate mode or customization preview.
+        ApplyCategory(skates, -1);
+
+        ApplyEquippedItemsToPlayer();
+    }
+
+    int GetStartingItem(CategoryData category)
+    {
+        int defaultIndex = FindDefaultItem(category);
+
+        if (defaultIndex >= 0)
+            return defaultIndex;
+
+        // If None is not allowed, automatically use the first item.
+        if (category != null &&
+            !category.allowNone &&
+            category.items != null &&
+            category.items.Length > 0)
+        {
+            return 0;
+        }
+
+        return -1;
+    }
 
     int FindDefaultItem(CategoryData category)
     {
-        if (category == null ||
-            category.items == null)
+        if (category == null || category.items == null)
             return -1;
-
 
         for (int i = 0; i < category.items.Length; i++)
         {
@@ -180,8 +159,31 @@ public void ApplyEquippedItemsToPlayer()
                 return i;
         }
 
-
         return -1;
+    }
+
+    bool CategoryMustHaveItem(CategoryData category)
+    {
+        if (category == null)
+            return false;
+
+        // A default item means this category can never be empty.
+        return FindDefaultItem(category) >= 0 || !category.allowNone;
+    }
+
+
+    // =====================================================
+    // PLAYER
+    // =====================================================
+
+    public void ApplyEquippedItemsToPlayer()
+    {
+        if (playerController == null)
+            return;
+
+        playerController.SetEquippedSkate(
+            GetItemObjects(skates, equippedSkates)
+        );
     }
 
 
@@ -191,79 +193,54 @@ public void ApplyEquippedItemsToPlayer()
 
     public void ShowHeadAccessories()
     {
-        OpenCategory(
-            Category.Head,
-            headAccessories
-        );
+        OpenCategory(Category.Head, headAccessories);
     }
-
 
     public void ShowBody()
     {
-        OpenCategory(
-            Category.Body,
-            body
-        );
+        OpenCategory(Category.Body, body);
     }
-
 
     public void ShowBags()
     {
-        OpenCategory(
-            Category.Bag,
-            bags
-        );
+        OpenCategory(Category.Bag, bags);
     }
-
 
     public void ShowSkates()
     {
-        OpenCategory(
-            Category.Skates,
-            skates
-        );
+        OpenCategory(Category.Skates, skates);
     }
 
-
-    void OpenCategory(
-        Category category,
-        CategoryData data)
+    void OpenCategory(Category category, CategoryData data)
     {
-        // Restore actual equipped item from old category.
+        // Remove preview from the previous category and put its real equipped item back.
+        // This does NOT touch the other categories.
         if (categoryInitialized)
             RestoreCategory(currentCategory);
-
 
         currentCategory = category;
         categoryInitialized = true;
 
-
-        selectedItem =
-            GetEquippedIndex();
-
+        selectedItem = GetEquippedIndex();
 
         BuildButtons(data);
 
-
-        // Show actual equipped item first.
         if (selectedItem >= 0)
             PreviewSelectedItem();
         else
             RestoreCategory(currentCategory);
-
 
         RefreshUI();
     }
 
 
     // =====================================================
-    // BUTTON CREATION
+    // BUTTONS
     // =====================================================
 
     void BuildButtons(CategoryData category)
     {
         ClearButtons();
-
 
         if (category == null ||
             category.items == null ||
@@ -271,75 +248,35 @@ public void ApplyEquippedItemsToPlayer()
             itemContent == null)
             return;
 
-
-        // NONE
-        if (category.allowNone)
+        // Do not show NONE if this category has a default item
+        // or allowNone is disabled.
+        if (category.allowNone && !CategoryMustHaveItem(category))
         {
-            Button button =
-                Instantiate(
-                    itemButtonPrefab,
-                    itemContent
-                );
-
+            Button button = Instantiate(itemButtonPrefab, itemContent);
             button.gameObject.SetActive(true);
             button.name = "None";
 
-            SetButtonVisual(
-                button,
-                "None",
-                null
-            );
-
-            button.onClick.AddListener(
-                SelectNone
-            );
+            SetButtonVisual(button, "None", null);
+            button.onClick.AddListener(SelectNone);
         }
 
-
-        // ITEMS
-        for (int i = 0;
-             i < category.items.Length;
-             i++)
+        for (int i = 0; i < category.items.Length; i++)
         {
             int index = i;
+            CustomizationItem item = category.items[index];
 
-            CustomizationItem item =
-                category.items[index];
-
-
-            Button button =
-                Instantiate(
-                    itemButtonPrefab,
-                    itemContent
-                );
-
+            Button button = Instantiate(itemButtonPrefab, itemContent);
             button.gameObject.SetActive(true);
+            button.name = item.itemName;
 
-            button.name =
-                item.itemName;
-
-
-            SetButtonVisual(
-                button,
-                item.itemName,
-                item.icon
-            );
-
-
-            button.onClick.AddListener(
-                () => SelectItem(index)
-            );
+            SetButtonVisual(button, item.itemName, item.icon);
+            button.onClick.AddListener(() => SelectItem(index));
         }
     }
 
-
-    void SetButtonVisual(
-        Button button,
-        string itemName,
-        Sprite icon)
+    void SetButtonVisual(Button button, string itemName, Sprite icon)
     {
-        TMP_Text text =
-            button.GetComponentInChildren<TMP_Text>(true);
+        TMP_Text text = button.GetComponentInChildren<TMP_Text>(true);
 
         if (text != null)
         {
@@ -347,13 +284,8 @@ public void ApplyEquippedItemsToPlayer()
             text.gameObject.SetActive(true);
         }
 
-
-        // Try to find separate child icon.
-        Image[] images =
-            button.GetComponentsInChildren<Image>(true);
-
+        Image[] images = button.GetComponentsInChildren<Image>(true);
         Image iconImage = null;
-
 
         foreach (Image image in images)
         {
@@ -364,12 +296,9 @@ public void ApplyEquippedItemsToPlayer()
             }
         }
 
-
         if (iconImage != null)
         {
-            iconImage.gameObject.SetActive(
-                icon != null
-            );
+            iconImage.gameObject.SetActive(icon != null);
 
             if (icon != null)
             {
@@ -377,26 +306,15 @@ public void ApplyEquippedItemsToPlayer()
                 iconImage.preserveAspect = true;
             }
         }
-
-        // No icon = normal button + text remains visible.
     }
-
 
     void ClearButtons()
     {
         if (itemContent == null)
             return;
 
-
-        for (int i =
-             itemContent.childCount - 1;
-             i >= 0;
-             i--)
-        {
-            Destroy(
-                itemContent.GetChild(i).gameObject
-            );
-        }
+        for (int i = itemContent.childCount - 1; i >= 0; i--)
+            Destroy(itemContent.GetChild(i).gameObject);
     }
 
 
@@ -406,19 +324,24 @@ public void ApplyEquippedItemsToPlayer()
 
     void SelectItem(int index)
     {
+        CategoryData data = GetCurrentCategory();
+
+        if (data == null ||
+            data.items == null ||
+            index < 0 ||
+            index >= data.items.Length)
+            return;
+
         selectedItem = index;
 
+        // Only objects from CURRENT category are changed here.
         PreviewSelectedItem();
-
         RefreshUI();
     }
 
-
     void PreviewSelectedItem()
     {
-        CategoryData data =
-            GetCurrentCategory();
-
+        CategoryData data = GetCurrentCategory();
 
         if (data == null ||
             data.items == null ||
@@ -426,13 +349,8 @@ public void ApplyEquippedItemsToPlayer()
             selectedItem >= data.items.Length)
             return;
 
+        CustomizationItem item = data.items[selectedItem];
 
-        CustomizationItem item =
-            data.items[selectedItem];
-
-
-        // Skate preview uses PlayerController
-        // so skate height can also be previewed.
         if (currentCategory == Category.Skates)
         {
             if (playerController != null)
@@ -444,41 +362,35 @@ public void ApplyEquippedItemsToPlayer()
             }
             else
             {
-                ApplyCategory(
-                    skates,
-                    selectedItem
-                );
+                ApplyCategory(skates, selectedItem);
             }
 
             return;
         }
 
-
-        // Head / Body / Bag preview immediately.
-        ApplyCategory(
-            data,
-            selectedItem
-        );
+        // Head selection only swaps Head objects.
+        // Body selection only swaps Body objects.
+        // Bag selection only swaps Bag objects.
+        ApplyCategory(data, selectedItem);
     }
-
 
     void SelectNone()
     {
+        CategoryData data = GetCurrentCategory();
+
+        // Category with a default item can NEVER become empty.
+        if (CategoryMustHaveItem(data))
+            return;
+
         selectedItem = -1;
-
         SetEquippedIndex(-1);
-
 
         if (currentCategory == Category.Skates)
         {
             if (playerController != null)
             {
                 playerController.SetEquippedSkate(null);
-
-                playerController.SetCustomizationSkatePreview(
-                    null,
-                    false
-                );
+                playerController.SetCustomizationSkatePreview(null, false);
             }
             else
             {
@@ -487,12 +399,8 @@ public void ApplyEquippedItemsToPlayer()
         }
         else
         {
-            ApplyCategory(
-                GetCurrentCategory(),
-                -1
-            );
+            ApplyCategory(data, -1);
         }
-
 
         RefreshUI();
     }
@@ -502,203 +410,173 @@ public void ApplyEquippedItemsToPlayer()
     // EQUIP
     // =====================================================
 
-    void ToggleEquip()
+    void EquipSelectedItem()
     {
-        if (selectedItem < 0)
+        CategoryData data = GetCurrentCategory();
+
+        if (data == null ||
+            data.items == null ||
+            selectedItem < 0 ||
+            selectedItem >= data.items.Length)
             return;
 
-
-        int equipped =
-            GetEquippedIndex();
-
-
-        // UNEQUIP
-        if (equipped == selectedItem)
+        // Clicking EQUIP on the already equipped item does nothing.
+        // There is no UNEQUIP toggle anymore.
+        if (GetEquippedIndex() == selectedItem)
         {
-            SetEquippedIndex(-1);
-
-
-            // Keep item visible as PREVIEW.
-            if (currentCategory == Category.Skates)
-            {
-                if (playerController != null)
-                {
-                    playerController.SetEquippedSkate(null);
-
-                    PreviewSelectedItem();
-                }
-            }
+            PreviewSelectedItem();
+            RefreshUI();
+            return;
         }
 
-        // EQUIP
-        else
+        SetEquippedIndex(selectedItem);
+
+        if (currentCategory == Category.Skates && playerController != null)
         {
-            SetEquippedIndex(
-                selectedItem
+            playerController.SetEquippedSkate(
+                data.items[selectedItem].objectsToEnable
             );
-
-
-            if (currentCategory == Category.Skates)
-            {
-                CategoryData data =
-                    GetCurrentCategory();
-
-
-                playerController?.SetEquippedSkate(
-                    data.items[selectedItem]
-                        .objectsToEnable
-                );
-            }
         }
 
-
-        // Always keep selected item visible.
         PreviewSelectedItem();
-
         RefreshUI();
     }
 
 
     // =====================================================
-    // RESTORE REAL EQUIPPED ITEM
+    // RESTORE EQUIPPED ITEMS
     // =====================================================
 
     void RestoreCategory(Category category)
     {
-        CategoryData data =
-            GetCategoryData(category);
-
-        int equipped =
-            GetEquippedIndex(category);
-
+        CategoryData data = GetCategoryData(category);
+        int equipped = GetEquippedIndex(category);
 
         if (category == Category.Skates)
         {
             if (playerController != null)
             {
-                playerController.SetCustomizationSkatePreview(
-                    null,
-                    false
-                );
-
+                playerController.SetCustomizationSkatePreview(null, false);
                 playerController.SetEquippedSkate(
-                    GetItemObjects(
-                        skates,
-                        equippedSkates
-                    )
+                    GetItemObjects(skates, equippedSkates)
                 );
+            }
+            else
+            {
+                ApplyCategory(skates, -1);
             }
 
             return;
         }
 
-
-        ApplyCategory(
-            data,
-            equipped
-        );
+        ApplyCategory(data, equipped);
     }
-
 
     void RestoreAllEquipped()
     {
-        ApplyCategory(
-            headAccessories,
-            equippedHead
-        );
-
-        ApplyCategory(
-            body,
-            equippedBody
-        );
-
-        ApplyCategory(
-            bags,
-            equippedBag
-        );
-
+        ApplyCategory(headAccessories, equippedHead);
+        ApplyCategory(body, equippedBody);
+        ApplyCategory(bags, equippedBag);
 
         if (playerController != null)
         {
-            playerController.SetCustomizationSkatePreview(
-                null,
-                false
-            );
-
+            playerController.SetCustomizationSkatePreview(null, false);
             playerController.SetEquippedSkate(
-                GetItemObjects(
-                    skates,
-                    equippedSkates
-                )
+                GetItemObjects(skates, equippedSkates)
             );
         }
     }
 
-
     void OnDisable()
     {
         RestoreAllEquipped();
-
         categoryInitialized = false;
     }
 
 
     // =====================================================
-    // ACTIVATE OBJECTS
+    // CATEGORY VISIBILITY
     // =====================================================
 
-    void ApplyCategory(
-        CategoryData category,
-        int index)
+    void ApplyCategory(CategoryData category, int index)
     {
-        if (category == null ||
-            category.items == null)
+        if (category == null || category.items == null)
             return;
 
-
-        for (int i = 0;
-             i < category.items.Length;
-             i++)
+        // IMPORTANT:
+        // This loops ONLY through the supplied category.
+        // It does not disable Head when changing Body, etc.
+        for (int i = 0; i < category.items.Length; i++)
         {
-            SetItemActive(
-                category.items[i],
-                false
-            );
+            bool active = i == index;
+            SetItemActive(category.items[i], active, category);
         }
-
-
-        if (index < 0 ||
-            index >= category.items.Length)
-            return;
-
-
-        SetItemActive(
-            category.items[index],
-            true
-        );
     }
-
 
     void SetItemActive(
         CustomizationItem item,
-        bool active)
+        bool active,
+        CategoryData changingCategory)
     {
-        if (item.objectsToEnable == null)
+        if (item == null || item.objectsToEnable == null)
             return;
 
-
-        foreach (GameObject obj
-                 in item.objectsToEnable)
+        foreach (GameObject obj in item.objectsToEnable)
         {
-            if (obj != null)
-                obj.SetActive(active);
+            if (obj == null)
+                continue;
+
+            // If the exact same object is also being used by an equipped item
+            // in another category, never turn it off from this category.
+            if (!active && IsUsedByAnotherEquippedCategory(obj, changingCategory))
+                continue;
+
+            obj.SetActive(active);
         }
     }
 
+    bool IsUsedByAnotherEquippedCategory(
+        GameObject obj,
+        CategoryData changingCategory)
+    {
+        if (headAccessories != changingCategory &&
+            ItemContainsObject(headAccessories, equippedHead, obj))
+            return true;
 
-    GameObject[] GetItemObjects(
+        if (body != changingCategory &&
+            ItemContainsObject(body, equippedBody, obj))
+            return true;
+
+        if (bags != changingCategory &&
+            ItemContainsObject(bags, equippedBag, obj))
+            return true;
+
+        // Skates are handled by PlayerController because their visibility
+        // also depends on skate mode / customization preview.
+
+        return false;
+    }
+
+    bool ItemContainsObject(
         CategoryData category,
-        int index)
+        int index,
+        GameObject obj)
+    {
+        GameObject[] objects = GetItemObjects(category, index);
+
+        if (objects == null)
+            return false;
+
+        foreach (GameObject itemObject in objects)
+        {
+            if (itemObject == obj)
+                return true;
+        }
+
+        return false;
+    }
+
+    GameObject[] GetItemObjects(CategoryData category, int index)
     {
         if (category == null ||
             category.items == null ||
@@ -706,9 +584,7 @@ public void ApplyEquippedItemsToPlayer()
             index >= category.items.Length)
             return null;
 
-
-        return category.items[index]
-            .objectsToEnable;
+        return category.items[index].objectsToEnable;
     }
 
 
@@ -718,9 +594,7 @@ public void ApplyEquippedItemsToPlayer()
 
     void RefreshUI()
     {
-        CategoryData data =
-            GetCurrentCategory();
-
+        CategoryData data = GetCurrentCategory();
 
         if (selectedItem < 0)
         {
@@ -736,30 +610,26 @@ public void ApplyEquippedItemsToPlayer()
             return;
         }
 
-
         if (data == null ||
+            data.items == null ||
             selectedItem >= data.items.Length)
             return;
 
-
         if (selectedItemNameText != null)
-        {
-            selectedItemNameText.text =
-                data.items[selectedItem].itemName;
-        }
+            selectedItemNameText.text = data.items[selectedItem].itemName;
 
+        bool alreadyEquipped = GetEquippedIndex() == selectedItem;
 
         if (equipButtonText != null)
         {
-            equipButtonText.text =
-                GetEquippedIndex() == selectedItem
-                    ? "UNEQUIP"
-                    : "EQUIP";
+            equipButtonText.text = alreadyEquipped
+                ? "EQUIPPED"
+                : "EQUIP";
         }
 
-
+        // Already-equipped item cannot be deselected using the Equip button.
         if (equipButton != null)
-            equipButton.interactable = true;
+            equipButton.interactable = !alreadyEquipped;
     }
 
 
@@ -769,14 +639,10 @@ public void ApplyEquippedItemsToPlayer()
 
     CategoryData GetCurrentCategory()
     {
-        return GetCategoryData(
-            currentCategory
-        );
+        return GetCategoryData(currentCategory);
     }
 
-
-    CategoryData GetCategoryData(
-        Category category)
+    CategoryData GetCategoryData(Category category)
     {
         switch (category)
         {
@@ -793,21 +659,15 @@ public void ApplyEquippedItemsToPlayer()
                 return skates;
         }
 
-
         return null;
     }
 
-
     int GetEquippedIndex()
     {
-        return GetEquippedIndex(
-            currentCategory
-        );
+        return GetEquippedIndex(currentCategory);
     }
 
-
-    int GetEquippedIndex(
-        Category category)
+    int GetEquippedIndex(Category category)
     {
         switch (category)
         {
@@ -824,10 +684,8 @@ public void ApplyEquippedItemsToPlayer()
                 return equippedSkates;
         }
 
-
         return -1;
     }
-
 
     void SetEquippedIndex(int index)
     {

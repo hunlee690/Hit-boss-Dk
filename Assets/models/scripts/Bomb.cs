@@ -9,12 +9,22 @@ public class Bomb : MonoBehaviour
     public float explosionRadius = 3f;
     public int damage = 3;
 
+
+    [Header("Ragdoll")]
+    public float ragdollTime = 2.5f;
+
+    [Tooltip("Horizontal blast knockback.")]
+    public float knockbackForce = 8.5f;
+
+    [Tooltip("Upward part of the blast.")]
+    public float upwardForce = 2f;
+
+
     [Header("Optional Effect")]
     public GameObject explosionEffectPrefab;
 
 
     CombatStats owner;
-
     Collider[] bombColliders;
 
     bool exploding;
@@ -23,7 +33,9 @@ public class Bomb : MonoBehaviour
     void Awake()
     {
         bombColliders =
-            GetComponentsInChildren<Collider>(true);
+            GetComponentsInChildren<Collider>(
+                true
+            );
 
 
         Rigidbody rb =
@@ -52,8 +64,6 @@ public class Bomb : MonoBehaviour
             newOwner;
 
 
-        // Completely ignore collision with the person
-        // who threw the bomb.
         IgnoreOwnerCollisions();
     }
 
@@ -65,7 +75,9 @@ public class Bomb : MonoBehaviour
 
 
         Collider[] ownerColliders =
-            owner.GetComponentsInChildren<Collider>(true);
+            owner.GetComponentsInChildren<Collider>(
+                true
+            );
 
 
         foreach (Collider bombCollider
@@ -107,8 +119,6 @@ public class Bomb : MonoBehaviour
                 .GetComponentInParent<CombatStats>();
 
 
-        // Safety check:
-        // never explode from touching owner.
         if (hitPlayer == owner)
             return;
 
@@ -140,11 +150,15 @@ public class Bomb : MonoBehaviour
 
     void Explode()
     {
+        Vector3 explosionPoint =
+            transform.position;
+
+
         if (explosionEffectPrefab != null)
         {
             Instantiate(
                 explosionEffectPrefab,
-                transform.position,
+                explosionPoint,
                 Quaternion.identity
             );
         }
@@ -152,12 +166,12 @@ public class Bomb : MonoBehaviour
 
         Collider[] hits =
             Physics.OverlapSphere(
-                transform.position,
+                explosionPoint,
                 explosionRadius
             );
 
 
-        HashSet<CombatStats> damaged =
+        HashSet<CombatStats> affected =
             new HashSet<CombatStats>();
 
 
@@ -170,16 +184,51 @@ public class Bomb : MonoBehaviour
             if (target == null ||
                 target == owner ||
                 target.IsDead)
+            {
+                continue;
+            }
+
+
+            if (!affected.Add(target))
                 continue;
 
 
-            if (!damaged.Add(target))
-                continue;
+            RagdollController ragdoll =
+                target.GetComponentInParent<RagdollController>();
+
+
+            bool wasRagdolled =
+                ragdoll != null &&
+                ragdoll.IsRagdolled;
 
 
             target.TakeDamage(
                 damage,
                 owner
+            );
+
+
+            if (ragdoll == null ||
+                wasRagdolled)
+            {
+                continue;
+            }
+
+
+            if (!target.IsDead)
+            {
+                ragdoll.EnterRagdoll(
+                    ragdollTime
+                );
+            }
+
+
+            // Killing hits also receive the blast force
+            // because CombatStats already enabled death ragdoll.
+            ragdoll.ApplyForceFromPoint(
+                explosionPoint,
+                knockbackForce,
+                upwardForce
             );
         }
 
