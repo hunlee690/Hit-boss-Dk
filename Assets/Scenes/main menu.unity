@@ -2319,10 +2319,6 @@ MonoBehaviour:
       equippedByDefault: 1
       objectsToEnable:
       - {fileID: 481929677}
-    - itemName: def
-      icon: {fileID: 0}
-      equippedByDefault: 0
-      objectsToEnable: []
   bags:
     allowNone: 1
     items:
