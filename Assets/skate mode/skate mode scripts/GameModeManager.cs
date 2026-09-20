@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-public class GameModeManager : MonoBehaviour
+public class GameModeManager : ModeManagerBase
 {
     public static GameModeManager Instance { get; private set; }
 
@@ -74,6 +74,7 @@ public class GameModeManager : MonoBehaviour
             matchDuration;
 
         matchRunning = true;
+        ApplyModeScripts();
     }
 
 

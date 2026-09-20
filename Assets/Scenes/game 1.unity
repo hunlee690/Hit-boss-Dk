@@ -1156,10 +1156,10 @@ MonoBehaviour:
   pickups:
   - name: bomb
     prefab: {fileID: 6322852915340389648, guid: 04084a81a490dd54d97282e0fe2f1d41, type: 3}
-    weight: 2
+    weight: 3
   - name: mine
     prefab: {fileID: 6322852915340389648, guid: 120f045fb1254bf488b9dd4346d80514, type: 3}
-    weight: 2
+    weight: 1
   - name: Stamina
     prefab: {fileID: 6322852915340389648, guid: e2386b2515495c24da26a329776c48cb, type: 3}
     weight: 6
@@ -1172,7 +1172,7 @@ MonoBehaviour:
   initialPickupCount: 2
   maxActivePickups: 3
   minSpawnDelay: 2
-  maxSpawnDelay: 4
+  maxSpawnDelay: 2
 --- !u!1 &1380471521
 GameObject:
   m_ObjectHideFlags: 0
@@ -1890,7 +1890,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
-  m_VertexColorAlwaysGammaSpace: 0
+  m_VertexColorAlwaysGammaSpace: 1
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -2344,6 +2344,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2ae2bb536f8d0642b17c7ab61e9f531, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameModeManager
+  allModeScripts:
+  - CoopPlayerController
+  thisModeScripts:
+  - PlayerController
+  - CombatController
+  - ThrowableInventory
+  - SimpleAIPlayerBehaviour
   aiPlayerPrefab: {fileID: 2811032630658427732, guid: 788a347e6cdfe8b4780b30b76441b7f4, type: 3}
   playerCount: 5
   spawnPoints:

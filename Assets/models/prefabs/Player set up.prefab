@@ -438,6 +438,7 @@ GameObject:
   - component: {fileID: 6753488878459428551}
   - component: {fileID: 7625904840146491186}
   - component: {fileID: 3399360970936691487}
+  - component: {fileID: 5541858659452132318}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -602,9 +603,13 @@ MonoBehaviour:
   slideStaminaCost: 2
   slideDamage: 1
   slideRagdollTime: 2
+  slideForce: 2.5
+  slideUpwardForce: 0.2
   punchStaminaCost: 3
   punchDamage: 3
   punchRagdollTime: 1.25
+  punchForce: 4.5
+  punchUpwardForce: 0.5
 --- !u!114 &7625904840146491186
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -654,6 +659,30 @@ MonoBehaviour:
   groundCheckDistance: 5
   recoveryGroundOffset: 0.05
   ignoreSelfCollisions: 1
+--- !u!114 &5541858659452132318
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 837874775807645504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1fbfb3127ca97e9438f164d894b9375f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CoopPlayerController
+  moveSpeed: 5
+  moveSmoothTime: 0.12
+  rotationSmoothTime: 0.12
+  jumpHeight: 1.5
+  jumpDuration: 0.4
+  jumpBuildUp: 0.1
+  rb: {fileID: 3951912132048367337}
+  animator: {fileID: 3630387287957565176}
+  cameraTransform: {fileID: 9173507761107166104}
+  visualModel: {fileID: 7860914450951781309}
+  visualYawOffset: 180
+  runAnimationSpeed: 1
 --- !u!1 &949138785799318529
 GameObject:
   m_ObjectHideFlags: 0
