@@ -152,6 +152,12 @@ public class MainMenu : MonoBehaviour
 
     void LoadGameMode(int index)
 {
+    if (HitBoss.Multiplayer.RoomManager.Instance?.Room != null)
+    {
+        HitBoss.Multiplayer.RoomManager.Instance.SetStatus("Leave your private room before starting solo play.");
+        FindFirstObjectByType<HitBoss.Multiplayer.RoomMenuController>()?.Open();
+        return;
+    }
     if (index < 0 || index >= gameModes.Length)
         return;
 
