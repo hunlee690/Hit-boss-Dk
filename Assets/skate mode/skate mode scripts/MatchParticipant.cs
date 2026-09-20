@@ -70,7 +70,8 @@ public class MatchParticipant : MonoBehaviour
         bool ai)
     {
         playerName =
-            newName;
+            !ai && HitBoss.Social.OnlineManager.Instance != null && HitBoss.Social.OnlineManager.Instance.Ready
+                ? HitBoss.Social.OnlineManager.Instance.Profiles.Current.username : newName;
 
         isAI =
             ai;
@@ -106,12 +107,14 @@ public class MatchParticipant : MonoBehaviour
     public void AddKill()
     {
         kills++;
+        if (!isAI) HitBoss.Social.OnlineManager.Instance?.RecordKill();
     }
 
 
     public void AddDeath()
     {
         deaths++;
+        if (!isAI) HitBoss.Social.OnlineManager.Instance?.RecordDeath();
     }
 
 
