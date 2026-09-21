@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using HitBoss.Items;
 
 public class PlayerCustomizationManager : MonoBehaviour
 {
@@ -15,6 +16,8 @@ public class PlayerCustomizationManager : MonoBehaviour
     [System.Serializable]
     public class CustomizationItem
     {
+        [Tooltip("Stable save ID. Do not change it after players own this item.")]
+        public string itemId;
         public string itemName;
 
         [Tooltip("Optional. Button still works without an icon.")]
@@ -127,6 +130,9 @@ public class PlayerCustomizationManager : MonoBehaviour
         ApplyCategory(skates, -1);
 
         ApplyEquippedItemsToPlayer();
+
+        if (ItemManager.Instance != null)
+            ItemManager.Instance.Sync();
     }
 
     int GetStartingItem(CategoryData category)
@@ -269,7 +275,8 @@ public class PlayerCustomizationManager : MonoBehaviour
             button.gameObject.SetActive(true);
             button.name = item.itemName;
 
-            SetButtonVisual(button, item.itemName, item.icon);
+            bool locked = ItemManager.Instance != null && !ItemManager.Instance.IsOwned(item.itemId);
+            SetButtonVisual(button, item.itemName + (locked ? "  LOCKED" : ""), item.icon);
             button.onClick.AddListener(() => SelectItem(index));
         }
     }
@@ -282,6 +289,15 @@ public class PlayerCustomizationManager : MonoBehaviour
         {
             text.text = itemName;
             text.gameObject.SetActive(true);
+        }
+        else
+        {
+            Text legacyText = button.GetComponentInChildren<Text>(true);
+            if (legacyText != null)
+            {
+                legacyText.text = itemName;
+                legacyText.gameObject.SetActive(true);
+            }
         }
 
         Image[] images = button.GetComponentsInChildren<Image>(true);
@@ -314,7 +330,10 @@ public class PlayerCustomizationManager : MonoBehaviour
             return;
 
         for (int i = itemContent.childCount - 1; i >= 0; i--)
+        {
+            itemContent.GetChild(i).gameObject.SetActive(false);
             Destroy(itemContent.GetChild(i).gameObject);
+        }
     }
 
 
@@ -384,6 +403,7 @@ public class PlayerCustomizationManager : MonoBehaviour
 
         selectedItem = -1;
         SetEquippedIndex(-1);
+        ItemManager.Instance?.Equip(currentCategory, "");
 
         if (currentCategory == Category.Skates)
         {
@@ -420,6 +440,13 @@ public class PlayerCustomizationManager : MonoBehaviour
             selectedItem >= data.items.Length)
             return;
 
+        CustomizationItem selected = data.items[selectedItem];
+        if (ItemManager.Instance != null && !ItemManager.Instance.IsOwned(selected.itemId))
+        {
+            RefreshUI();
+            return;
+        }
+
         // Clicking EQUIP on the already equipped item does nothing.
         // There is no UNEQUIP toggle anymore.
         if (GetEquippedIndex() == selectedItem)
@@ -430,6 +457,7 @@ public class PlayerCustomizationManager : MonoBehaviour
         }
 
         SetEquippedIndex(selectedItem);
+        ItemManager.Instance?.Equip(currentCategory, selected.itemId);
 
         if (currentCategory == Category.Skates && playerController != null)
         {
@@ -619,17 +647,16 @@ public class PlayerCustomizationManager : MonoBehaviour
             selectedItemNameText.text = data.items[selectedItem].itemName;
 
         bool alreadyEquipped = GetEquippedIndex() == selectedItem;
+        bool owned = ItemManager.Instance == null || ItemManager.Instance.IsOwned(data.items[selectedItem].itemId);
 
         if (equipButtonText != null)
         {
-            equipButtonText.text = alreadyEquipped
-                ? "EQUIPPED"
-                : "EQUIP";
+            equipButtonText.text = !owned ? "LOCKED" : alreadyEquipped ? "EQUIPPED" : "EQUIP";
         }
 
         // Already-equipped item cannot be deselected using the Equip button.
         if (equipButton != null)
-            equipButton.interactable = !alreadyEquipped;
+            equipButton.interactable = owned && !alreadyEquipped;
     }
 
 
@@ -707,5 +734,34 @@ public class PlayerCustomizationManager : MonoBehaviour
                 equippedSkates = index;
                 break;
         }
+    }
+
+    public void RefreshFromInventory()
+    {
+        if (!initialized || ItemManager.Instance == null) return;
+        equippedHead = StoredIndex(Category.Head, headAccessories, equippedHead);
+        equippedBody = StoredIndex(Category.Body, body, equippedBody);
+        equippedBag = StoredIndex(Category.Bag, bags, equippedBag);
+        equippedSkates = StoredIndex(Category.Skates, skates, equippedSkates);
+        ApplyCategory(headAccessories, equippedHead);
+        ApplyCategory(body, equippedBody);
+        ApplyCategory(bags, equippedBag);
+        ApplyEquippedItemsToPlayer();
+        if (categoryInitialized)
+        {
+            selectedItem = GetEquippedIndex();
+            BuildButtons(GetCurrentCategory());
+            RefreshUI();
+        }
+    }
+
+    int StoredIndex(Category category, CategoryData data, int fallback)
+    {
+        string id = ItemManager.Instance.EquippedId(category);
+        if (string.IsNullOrEmpty(id)) return -1;
+        if (data?.items == null) return fallback;
+        for (int i = 0; i < data.items.Length; i++)
+            if (data.items[i]?.itemId == id && ItemManager.Instance.IsOwned(id)) return i;
+        return fallback;
     }
 }

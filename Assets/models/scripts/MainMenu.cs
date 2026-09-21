@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 using HitBoss.Multiplayer;
+using HitBoss.Items;
 using TMPro;
 
 [DefaultExecutionOrder(-50)]
@@ -16,6 +17,8 @@ public class MainMenu : MonoBehaviour
     public Button shopBackButton, gamePassBackButton, spinBackButton, settingsBackButton;
     public Button[] shopCategoryButtons;
     public TMP_Text shopStatus, spinTitle;
+    public ShopManager itemShop;
+    public SpinManager spinManager;
     public Slider masterVolume, musicVolume, effectsVolume;
     public Toggle fullscreenToggle;
     public Button qualityButton;
@@ -76,7 +79,7 @@ public class MainMenu : MonoBehaviour
     public void OpenGameModes() => SetMenu(gameModeMenu);
     public void OpenShop() { SetMenu(shopMenu); SelectShopSection(3); }
     public void OpenGamePass() => SetMenu(gamePassMenu);
-    public void OpenSpin(string title) { if (spinTitle != null) spinTitle.text = title; SetMenu(spinMenu); }
+    public void OpenSpin(string title) { SetMenu(spinMenu); if (spinTitle != null) spinTitle.text = title; spinManager?.Open(title); }
     public void OpenSettings() => SetMenu(settingsMenu);
     static void Bind(Button button, UnityEngine.Events.UnityAction action) { if (button != null) button.onClick.AddListener(action); }
     void SetMenu(GameObject menu)
@@ -94,7 +97,9 @@ public class MainMenu : MonoBehaviour
     {
         if (index == 0) { OpenSpin("GEM SPIN"); return; }
         if (index == 1) { OpenSpin("COIN SPIN"); return; }
-        if (shopStatus != null) shopStatus.text = index == 2 ? "CURRENCY SHOP\nComing later" : "ITEM SHOP\nComing later";
+        if (index == 3) { itemShop?.Open(); return; }
+        itemShop?.Hide();
+        if (shopStatus != null) shopStatus.text = "CURRENCY SHOP\nComing later";
     }
     void SetupSettings()
     {

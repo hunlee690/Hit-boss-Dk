@@ -39,6 +39,7 @@ namespace HitBoss.Social
                     record.profile.gems = 100;
                     record.profile.currencyInitialized = true;
                 }
+                if (record.profile.ownedItems == null) record.profile.ownedItems = new List<string>();
                 // Also republishes the indexed name after a new index is configured.
                 await service.SaveAsync(record);
                 saved = record.profile;
@@ -87,6 +88,65 @@ namespace HitBoss.Social
             PersistPending();
             UpdateView();
         }
+        public bool OwnsItem(string itemId)
+        {
+            return !string.IsNullOrWhiteSpace(itemId) && Current?.ownedItems != null && Current.ownedItems.Contains(itemId);
+        }
+        public void InitializeInventory(IEnumerable<string> ownedItems, string head, string body, string bag, string skates)
+        {
+            if (saved == null || Current.inventoryInitialized) return;
+            pending.batches.Add(new ProgressBatch
+            {
+                initializeInventory = true,
+                grantItems = ownedItems?.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList() ?? new List<string>(),
+                equippedHead = head ?? "",
+                equippedBody = body ?? "",
+                equippedBag = bag ?? "",
+                equippedSkates = skates ?? ""
+            });
+            PersistPending();
+            UpdateView();
+        }
+        public void EnsureOwnedItems(IEnumerable<string> itemIds)
+        {
+            if (saved == null || Current == null || itemIds == null) return;
+            var missing = itemIds.Where(x => !string.IsNullOrWhiteSpace(x) && !OwnsItem(x)).Distinct().ToList();
+            if (missing.Count == 0) return;
+            pending.batches.Add(new ProgressBatch { grantItems = missing });
+            PersistPending();
+            UpdateView();
+        }
+        public bool TryPurchaseItem(string itemId, int coinCost, int gemCost, out string message)
+        {
+            message = "";
+            if (saved == null || Current == null) { message = "Profile is still loading."; return false; }
+            if (string.IsNullOrWhiteSpace(itemId)) { message = "This item is not configured."; return false; }
+            if (OwnsItem(itemId)) { message = "Already owned."; return false; }
+            coinCost = Math.Max(0, coinCost); gemCost = Math.Max(0, gemCost);
+            if (Current.coins < coinCost) { message = "Not enough coins."; return false; }
+            if (Current.gems < gemCost) { message = "Not enough gems."; return false; }
+            pending.batches.Add(new ProgressBatch
+            {
+                coinCost = coinCost,
+                gemCost = gemCost,
+                grantItems = new List<string> { itemId }
+            });
+            PersistPending();
+            UpdateView();
+            message = "Purchased.";
+            return true;
+        }
+        public bool SetEquippedItem(string category, string itemId)
+        {
+            if (saved == null || Current == null || string.IsNullOrWhiteSpace(category)) return false;
+            if (!string.IsNullOrEmpty(itemId) && !OwnsItem(itemId)) return false;
+            string current = category == "Head" ? Current.equippedHead : category == "Body" ? Current.equippedBody : category == "Bag" ? Current.equippedBag : Current.equippedSkates;
+            if ((current ?? "") == (itemId ?? "")) return true;
+            pending.batches.Add(new ProgressBatch { equipCategory = category, equippedItem = itemId ?? "" });
+            PersistPending();
+            UpdateView();
+            return true;
+        }
         public Task<ProfileRecord> VisitAsync(string id) => service.LoadAsync(id);
         public Task<IReadOnlyList<SocialPlayer>> SearchAsync(string name) => service.SearchAsync(name);
 
@@ -120,6 +180,27 @@ namespace HitBoss.Social
             profile.experience = (int)Math.Min(int.MaxValue, (long)profile.experience + batch.xp);
             profile.coins = (int)Math.Min(int.MaxValue, (long)profile.coins + batch.coins);
             profile.gems = (int)Math.Min(int.MaxValue, (long)profile.gems + batch.gems);
+            profile.coins = Math.Max(0, profile.coins - Math.Max(0, batch.coinCost));
+            profile.gems = Math.Max(0, profile.gems - Math.Max(0, batch.gemCost));
+            if (profile.ownedItems == null) profile.ownedItems = new List<string>();
+            if (batch.grantItems != null)
+                foreach (string item in batch.grantItems)
+                    if (!string.IsNullOrWhiteSpace(item) && !profile.ownedItems.Contains(item)) profile.ownedItems.Add(item);
+            if (batch.initializeInventory && !profile.inventoryInitialized)
+            {
+                profile.inventoryInitialized = true;
+                profile.equippedHead = batch.equippedHead ?? "";
+                profile.equippedBody = batch.equippedBody ?? "";
+                profile.equippedBag = batch.equippedBag ?? "";
+                profile.equippedSkates = batch.equippedSkates ?? "";
+            }
+            if (!string.IsNullOrWhiteSpace(batch.equipCategory))
+            {
+                if (batch.equipCategory == "Head") profile.equippedHead = batch.equippedItem ?? "";
+                else if (batch.equipCategory == "Body") profile.equippedBody = batch.equippedItem ?? "";
+                else if (batch.equipCategory == "Bag") profile.equippedBag = batch.equippedItem ?? "";
+                else if (batch.equipCategory == "Skates") profile.equippedSkates = batch.equippedItem ?? "";
+            }
             profile.appliedBatches.Add(batch.id);
             // Retain IDs to make a retry after an uncertain response idempotent.
             if (profile.appliedBatches.Count > 256) profile.appliedBatches.RemoveAt(0);

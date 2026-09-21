@@ -15,6 +15,12 @@ namespace HitBoss.Social
         public int coins;
         public int gems;
         public bool currencyInitialized;
+        public bool inventoryInitialized;
+        public List<string> ownedItems = new List<string>();
+        public string equippedHead;
+        public string equippedBody;
+        public string equippedBag;
+        public string equippedSkates;
         public List<string> appliedBatches = new List<string>();
 
         // 100 XP for level 2, then 50 more XP for each subsequent level.
@@ -42,6 +48,16 @@ namespace HitBoss.Social
         public int xp;
         public int coins;
         public int gems;
+        public int coinCost;
+        public int gemCost;
+        public List<string> grantItems = new List<string>();
+        public bool initializeInventory;
+        public string equippedHead;
+        public string equippedBody;
+        public string equippedBag;
+        public string equippedSkates;
+        public string equipCategory;
+        public string equippedItem;
     }
 
     public enum SocialList { Friends, Requests, Sent, Search }
