@@ -25,6 +25,12 @@ namespace HitBoss.Multiplayer
         void Start()
         {
             manager = RoomManager.Instance; online = OnlineManager.Instance;
+            if (manager == null)
+            {
+                if (statusText != null) statusText.text = "Multiplayer is starting…";
+                enabled = false;
+                return;
+            }
             manager.connection.BindMenu(mainMenu.playerSetup);
             manager.Changed += Render;
             if (online != null) online.Changed += Render;
@@ -75,13 +81,14 @@ namespace HitBoss.Multiplayer
         void Render()
         {
             if (manager == null) return;
-            badge.text = manager.Invitations.Count > 0 ? manager.Invitations.Count + " invite(s)" : manager.Room != null ? "In room" : "";
+            if (badge != null) badge.text = manager.Invitations.Count > 0 ? manager.Invitations.Count + " invite(s)" : manager.Room != null ? "In room" : "";
             // Closing the menu preserves the room; no list rebuilding is needed while hidden.
-            if (!window.activeSelf) return;
+            if (window == null || !window.activeSelf) return;
             var room = manager.Room;
             bool inRoom = room != null;
-            if (inRoom && manager.Mode != null) selectedMode = Array.IndexOf(manager.modes, manager.Mode);
-            var selected = manager.modes.Length > 0 ? manager.modes[Mathf.Clamp(selectedMode, 0, manager.modes.Length - 1)] : null;
+            var modes = manager.modes ?? Array.Empty<MultiplayerMode>();
+            if (inRoom && manager.Mode != null) selectedMode = Array.IndexOf(modes, manager.Mode);
+            var selected = modes.Length > 0 ? modes[Mathf.Clamp(selectedMode, 0, modes.Length - 1)] : null;
             modeText.text = selected != null ? selected.displayName + "  •  " + selected.minPlayers + "–" + (inRoom ? Math.Min(selected.maxPlayers, room.MaxPlayers) : selected.maxPlayers) + " players" : "No modes configured";
             previousMode.interactable = nextMode.interactable = !manager.Busy && (!inRoom || manager.IsHost && !manager.PublicMatch && !room.IsLocked);
             statusText.text = manager.Status;

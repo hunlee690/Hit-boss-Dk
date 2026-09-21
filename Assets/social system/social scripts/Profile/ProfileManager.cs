@@ -33,6 +33,12 @@ namespace HitBoss.Social
                 if (record == null)
                     record = new ProfileRecord { playerId = account.PlayerId, profile = new PlayerProfile { gamePlayerId = Guid.NewGuid().ToString("N"), username = name } };
                 else record.profile.username = name;
+                if (!record.profile.currencyInitialized)
+                {
+                    record.profile.coins = 300;
+                    record.profile.gems = 100;
+                    record.profile.currencyInitialized = true;
+                }
                 // Also republishes the indexed name after a new index is configured.
                 await service.SaveAsync(record);
                 saved = record.profile;
@@ -73,6 +79,14 @@ namespace HitBoss.Social
             PersistPending();
             UpdateView();
         }
+        public void RecordCurrency(int coins, int gems)
+        {
+            if (saved == null) return;
+            if (coins < 0 || gems < 0) throw new ArgumentOutOfRangeException("Currency rewards cannot be negative.");
+            pending.batches.Add(new ProgressBatch { coins = coins, gems = gems });
+            PersistPending();
+            UpdateView();
+        }
         public Task<ProfileRecord> VisitAsync(string id) => service.LoadAsync(id);
         public Task<IReadOnlyList<SocialPlayer>> SearchAsync(string name) => service.SearchAsync(name);
 
@@ -104,6 +118,8 @@ namespace HitBoss.Social
             profile.totalKills = (int)Math.Min(int.MaxValue, (long)profile.totalKills + batch.kills);
             profile.totalDeaths = (int)Math.Min(int.MaxValue, (long)profile.totalDeaths + batch.deaths);
             profile.experience = (int)Math.Min(int.MaxValue, (long)profile.experience + batch.xp);
+            profile.coins = (int)Math.Min(int.MaxValue, (long)profile.coins + batch.coins);
+            profile.gems = (int)Math.Min(int.MaxValue, (long)profile.gems + batch.gems);
             profile.appliedBatches.Add(batch.id);
             // Retain IDs to make a retry after an uncertain response idempotent.
             if (profile.appliedBatches.Count > 256) profile.appliedBatches.RemoveAt(0);

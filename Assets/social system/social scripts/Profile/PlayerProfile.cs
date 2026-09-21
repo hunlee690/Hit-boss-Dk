@@ -12,6 +12,9 @@ namespace HitBoss.Social
         public int totalKills;
         public int totalDeaths;
         public int experience;
+        public int coins;
+        public int gems;
+        public bool currencyInitialized;
         public List<string> appliedBatches = new List<string>();
 
         // 100 XP for level 2, then 50 more XP for each subsequent level.
@@ -37,6 +40,8 @@ namespace HitBoss.Social
         public int kills;
         public int deaths;
         public int xp;
+        public int coins;
+        public int gems;
     }
 
     public enum SocialList { Friends, Requests, Sent, Search }

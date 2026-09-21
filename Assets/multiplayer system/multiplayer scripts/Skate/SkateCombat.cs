@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using HitBoss.Social;
+using HitBoss.Currency;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -62,7 +63,12 @@ namespace HitBoss.Multiplayer.Skate
         void KillsChanged(int oldValue, int value)
         {
             Player.participant.kills = value;
-            if (IsOwner && !Player.IsBot.Value && value > oldValue) OnlineManager.Instance?.Profiles?.RecordProgress(value - oldValue, 0, (value - oldValue) * (OnlineManager.Instance?.xpPerKill ?? 25));
+            if (IsOwner && !Player.IsBot.Value && value > oldValue)
+            {
+                int gained = value - oldValue;
+                OnlineManager.Instance?.Profiles?.RecordProgress(gained, 0, gained * (OnlineManager.Instance?.xpPerKill ?? 25));
+                CurrencyManager.Instance?.AwardKillCoins(gained);
+            }
         }
         void DeathsChanged(int oldValue, int value)
         {
