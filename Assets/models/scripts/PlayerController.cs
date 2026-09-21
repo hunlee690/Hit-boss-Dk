@@ -382,17 +382,17 @@ public class PlayerController : MonoBehaviour
 
 
     // LEFT = SLIDE
-    if (Mouse.current.leftButton.wasPressedThisFrame)
+    if (Mouse.current.leftButton.wasPressedThisFrame && combatController != null && combatController.isActiveAndEnabled)
         combatController?.TrySlide();
 
 
     // RIGHT = PUNCH
-    if (Mouse.current.rightButton.wasPressedThisFrame)
+    if (Mouse.current.rightButton.wasPressedThisFrame && combatController != null && combatController.isActiveAndEnabled)
         combatController?.TryPunch();
 
 
     // MIDDLE = THROW
-    if (Mouse.current.middleButton.wasPressedThisFrame)
+    if (Mouse.current.middleButton.wasPressedThisFrame && throwableInventory != null && throwableInventory.isActiveAndEnabled)
 {
     throwableInventory?.TryUseThrowable();
 }

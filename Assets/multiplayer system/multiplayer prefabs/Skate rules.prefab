@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &766803139657142472
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3578737627831748317}
+  - component: {fileID: 8135798653589785152}
+  m_Layer: 0
+  m_Name: Skate rules
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3578737627831748317
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 766803139657142472}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8135798653589785152
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 766803139657142472}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1551bbf1d11f8524f8a2312624c89766, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HitBoss.Multiplayer.Skate.SkateMatchRules
+  staminaPickup: {fileID: 1411727217739491285, guid: 31ee53472a7b9da48a59de67b16c637f, type: 3}
+  bombPickup: {fileID: 6668593341925625352, guid: 11e054559ddbb734585b3ec063b7b8bb, type: 3}
+  minePickup: {fileID: 6886270121955080500, guid: 946e28f956c50b34da96793d2800be24, type: 3}
+  bomb: {fileID: 372438570037369826, guid: 3e44cd6f43907824c95baf05e6585a75, type: 3}
+  mine: {fileID: 5962145395321937575, guid: c2fe25a114a69fa46b340891fce151da, type: 3}
+  matchDuration: 180
+  respawnDelay: 2

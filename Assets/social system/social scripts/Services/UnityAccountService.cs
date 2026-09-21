@@ -14,7 +14,10 @@ namespace HitBoss.Social
         public async Task SignInAsync(string environment)
         {
             if ((services?.State ?? UnityServices.State) != ServicesInitializationState.Initialized)
-                await (services ?? UnityServices.Instance).InitializeAsync(new InitializationOptions().SetEnvironmentName(environment));
+            {
+                var options = new InitializationOptions().SetEnvironmentName(environment);
+                await (services ?? UnityServices.Instance).InitializeAsync(options);
+            }
             // Reuses Unity's cached session. Never clears tokens or silently creates a new account on an error.
             if (!Auth.IsSignedIn)
                 await Auth.SignInAnonymouslyAsync();

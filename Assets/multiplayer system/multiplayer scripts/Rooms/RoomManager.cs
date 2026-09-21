@@ -25,7 +25,13 @@ namespace HitBoss.Multiplayer
         public bool IsHost => Room != null && Room.IsHost;
         public MultiplayerMode Mode => modes.FirstOrDefault(m => m != null && m.modeId == UnityRoomService.Property(Room, "mode"));
         public bool InMatch => Room != null && UnityRoomService.Property(Room, "phase") == "playing";
-        public bool CanStart => !Busy && IsHost && !Room.IsLocked && Mode != null && Room.PlayerCount >= Mode.minPlayers && Room.PlayerCount <= Mode.maxPlayers && Room.Players.All(p => UnityRoomService.IsReady(Room, p));
+        public bool PublicMatch => UnityRoomService.Property(Room, "public") == "1";
+        public bool FillWithBots => UnityRoomService.Property(Room, "bots") == "1";
+        public int BotCount => Room == null || Mode == null || !FillWithBots ? 0 : Math.Max(0, Math.Min(Room.MaxPlayers, Mode.maxPlayers) - Room.PlayerCount);
+        public bool CanStart => !Busy && IsHost && !Room.IsLocked && Mode != null && Room.PlayerCount + BotCount >= Mode.minPlayers && Room.PlayerCount <= Mode.maxPlayers && Room.Players.All(p => UnityRoomService.IsReady(Room, p));
+        float publicStartTime;
+        bool autoStartIssued;
+        public int SearchSeconds => Math.Max(0, (int)Math.Ceiling(publicStartTime - Time.unscaledTime));
         UnityRoomService service;
         bool listening, leaving, refreshing, quitting;
         CancellationTokenSource roomLifetime;
@@ -40,6 +46,8 @@ namespace HitBoss.Multiplayer
         }
         void Update()
         {
+            if (PublicMatch && IsHost && !InMatch && !autoStartIssued && CanStart && SearchSeconds == 0)
+            { autoStartIssued = true; _ = StartMatchAsync(); }
             if (!listening && OnlineManager.Instance?.Friends?.Ready == true)
             {
                 FriendsService.Instance.MessageReceived += ReceiveInvite; listening = true;
@@ -76,6 +84,31 @@ namespace HitBoss.Multiplayer
             Attach(await service.CreateAsync(modes[index], OnlineManager.Instance.Profiles.Current.username));
             SetStatus("Room created. Invite friends or share the code.");
         });
+        public Task FindOnlineAsync(int index) => RunAsync(async () =>
+        {
+            RequireAccount();
+            if (Room != null) throw new InvalidOperationException("Leave your current room first.");
+            if (index < 0 || index >= modes.Length) throw new ArgumentException("Select a mode.");
+            var mode = modes[index]; mode.ValidateConfiguration();
+            SetStatus("Looking for players in this mode…");
+            var name = OnlineManager.Instance.Profiles.Current.username;
+            var found = await service.FindPublicAsync(mode, name);
+            if (found == null)
+            {
+                await Task.Delay(UnityEngine.Random.Range(1250, 2000));
+                found = await service.FindPublicAsync(mode, name);
+            }
+            Attach(found ?? await service.CreateAsync(mode, name, true));
+            if (!IsHost) await UnityRoomService.SetReadyAsync(Room, true);
+            SetStatus(IsHost ? "Looking for players for 15 seconds. Empty places will use bots." : "Joined online match. Waiting for the host…");
+        });
+        public Task ToggleBotsAsync() => RunAsync(async () =>
+        {
+            if (!IsHost || Room.IsLocked || PublicMatch) return;
+            Room.AsHost().SetProperty("bots", new SessionProperty(FillWithBots ? "0" : "1", VisibilityPropertyOptions.Member));
+            await UnityRoomService.RetryAsync(() => Room.AsHost().SavePropertiesAsync());
+            SetStatus(FillWithBots ? "Bots fill empty places. You can start by yourself." : "Bots removed.");
+        });
         public Task JoinAsync(string code) => RunAsync(async () =>
         {
             RequireAccount(); if (Room != null) throw new InvalidOperationException("Leave your current room before joining another.");
@@ -83,11 +116,14 @@ namespace HitBoss.Multiplayer
             var joined = await service.JoinAsync(code, OnlineManager.Instance.Profiles.Current.username);
             if (UnityRoomService.Property(joined, "version") != UnityRoomService.Version || !modes.Any(m => m != null && m.modeId == UnityRoomService.Property(joined, "mode")) || joined.IsLocked || UnityRoomService.Property(joined, "phase") != "room")
             { await joined.LeaveAsync(); throw new InvalidOperationException("This room has started or uses a different game version."); }
-            Attach(joined); SetStatus("Joined. Press Ready when you are ready to play.");
+            Attach(joined);
+            if (PublicMatch) await UnityRoomService.SetReadyAsync(Room, true);
+            SetStatus(PublicMatch ? "Joined online match. Waiting for the host…" : "Joined. Press Ready when you are ready to play.");
         });
         void Attach(ISession room)
         {
             Room = room; originalHost = room.Host; nextRefresh = Time.unscaledTime + 12;
+            publicStartTime = Time.unscaledTime + 15; autoStartIssued = false;
             roomLifetime = new CancellationTokenSource();
             Room.Changed += RoomChanged; Room.Deleted += RoomEnded; Room.RemovedFromSession += RoomEnded;
             Room.SessionHostChanged += HostChanged; Notify();
@@ -121,7 +157,7 @@ namespace HitBoss.Multiplayer
         });
         public Task SelectModeAsync(int index) => RunAsync(async () =>
         {
-            if (!IsHost || Room.IsLocked || index < 0 || index >= modes.Length) return;
+            if (!IsHost || PublicMatch || Room.IsLocked || index < 0 || index >= modes.Length) return;
             modes[index].ValidateConfiguration();
             if (Room.PlayerCount > modes[index].maxPlayers) throw new InvalidOperationException("There are too many players for this mode.");
             if (Room.MaxPlayers < modes[index].minPlayers) throw new InvalidOperationException("Create a new room for this mode's larger player requirement.");
@@ -132,22 +168,22 @@ namespace HitBoss.Multiplayer
             if (!IsHost || Room.IsLocked) return;
             var host = Room.AsHost();
             var cancellation = roomLifetime.Token;
-            await host.RefreshAsync(); cancellation.ThrowIfCancellationRequested();
+            await UnityRoomService.RetryAsync(() => host.RefreshAsync()); cancellation.ThrowIfCancellationRequested();
             var selected = Mode;
-            if (selected == null || Room.PlayerCount < selected.minPlayers || Room.PlayerCount > selected.maxPlayers || !Room.Players.All(p => UnityRoomService.IsReady(Room, p)))
+            if (selected == null || Room.PlayerCount + BotCount < selected.minPlayers || Room.PlayerCount > selected.maxPlayers || !Room.Players.All(p => UnityRoomService.IsReady(Room, p)))
                 throw new InvalidOperationException("Wait for the required players and everyone to be ready.");
             selected.ValidateConfiguration();
             try
             {
-                host.IsLocked = true; await host.SavePropertiesAsync(); cancellation.ThrowIfCancellationRequested();
-                await host.RefreshAsync(); cancellation.ThrowIfCancellationRequested();
-                if (host.PlayerCount < selected.minPlayers || host.PlayerCount > selected.maxPlayers || !host.Players.All(p => UnityRoomService.IsReady(host, p)))
+                host.IsLocked = true; await UnityRoomService.RetryAsync(() => host.SavePropertiesAsync()); cancellation.ThrowIfCancellationRequested();
+                await UnityRoomService.RetryAsync(() => host.RefreshAsync()); cancellation.ThrowIfCancellationRequested();
+                if (host.PlayerCount + BotCount < selected.minPlayers || host.PlayerCount > selected.maxPlayers || !host.Players.All(p => UnityRoomService.IsReady(host, p)))
                     throw new InvalidOperationException("The player list or ready state changed. Ready up and try again.");
                 SetStatus("Connecting players…");
                 await host.Network.StartRelayNetworkAsync(new RelayNetworkOptions()); cancellation.ThrowIfCancellationRequested();
                 await connection.WaitForPlayersAsync(host.PlayerCount, cancellation);
                 host.SetProperty("phase", new SessionProperty("playing", VisibilityPropertyOptions.Member));
-                await host.SavePropertiesAsync(); cancellation.ThrowIfCancellationRequested();
+                await UnityRoomService.RetryAsync(() => host.SavePropertiesAsync()); cancellation.ThrowIfCancellationRequested();
                 connection.LoadMode(selected);
                 SetStatus("Match started.");
             }

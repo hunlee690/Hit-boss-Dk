@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.EventSystems;
 
+[DefaultExecutionOrder(-50)]
 public class MainMenu : MonoBehaviour
 {
     [System.Serializable]
@@ -29,6 +30,13 @@ public class MainMenu : MonoBehaviour
 
     [Header("Game Modes")]
     public GameMode[] gameModes;
+    public bool onlinePlay;
+    public Button onlineModeButton;
+    public void ToggleOnlinePlay()
+    {
+        onlinePlay = !onlinePlay;
+        if (onlineModeButton != null) onlineModeButton.GetComponentInChildren<TMPro.TMP_Text>().text = onlinePlay ? "ONLINE MATCH  (switch to solo)" : "SOLO PLAY  (switch to online)";
+    }
 
     [Header("Player")]
     public GameObject playerSetup;
@@ -45,6 +53,7 @@ public class MainMenu : MonoBehaviour
 
     void Awake()
     {
+        SetPlayerGameplay(false);
         if (playerSetup != null)
         {
             playerSetup.transform.SetParent(null);
@@ -93,6 +102,7 @@ public class MainMenu : MonoBehaviour
 
 
     OpenMainMenu();
+    if (onlineModeButton != null) onlineModeButton.onClick.AddListener(ToggleOnlinePlay);
 }
 
     void Update()
@@ -150,6 +160,39 @@ public class MainMenu : MonoBehaviour
     // GAME MODES
     // =========================================================
 
+    void SetPlayerGameplay(bool playing)
+    {
+        if (playing)
+        {
+            // Scene loading completes next frame; silence the menu before enabling the player.
+            foreach (var root in gameObject.scene.GetRootGameObjects())
+            {
+                foreach (var listener in root.GetComponentsInChildren<AudioListener>(true)) listener.enabled = false;
+                foreach (var camera in root.GetComponentsInChildren<Camera>(true)) camera.enabled = false;
+            }
+        }
+        if (playerController != null)
+        {
+            playerController.enabled = playing;
+            var body = playerController.GetComponent<Rigidbody>();
+            if (body != null) { if (playing) body.isKinematic = false; body.useGravity = playing; }
+            var coop = playerController.GetComponent<CoopPlayerController>();
+            if (coop != null) coop.enabled = false;
+            var combat = playerController.GetComponent<CombatController>();
+            if (combat != null) combat.enabled = playing;
+            var inventory = playerController.GetComponent<ThrowableInventory>();
+            if (inventory != null) inventory.enabled = playing;
+        }
+        if (playerCamera != null)
+        {
+            playerCamera.enabled = playing;
+            var camera = playerCamera.GetComponent<Camera>();
+            if (camera != null) camera.enabled = playing;
+            var listener = playerCamera.GetComponent<AudioListener>();
+            if (listener != null) listener.enabled = playing;
+        }
+    }
+
     void LoadGameMode(int index)
 {
     if (HitBoss.Multiplayer.RoomManager.Instance?.Room != null)
@@ -158,12 +201,19 @@ public class MainMenu : MonoBehaviour
         FindFirstObjectByType<HitBoss.Multiplayer.RoomMenuController>()?.Open();
         return;
     }
+
     if (index < 0 || index >= gameModes.Length)
         return;
 
 
     string sceneName =
         gameModes[index].sceneName;
+
+    if (onlinePlay)
+    {
+        FindFirstObjectByType<HitBoss.Multiplayer.RoomMenuController>()?.FindOnlineMode(sceneName);
+        return;
+    }
 
 
     if (string.IsNullOrEmpty(sceneName))
@@ -186,11 +236,7 @@ public class MainMenu : MonoBehaviour
     }
 
 
-    if (playerController != null)
-        playerController.enabled = true;
-
-    if (playerCamera != null)
-        playerCamera.enabled = true;
+    SetPlayerGameplay(true);
 
 
     Cursor.lockState =

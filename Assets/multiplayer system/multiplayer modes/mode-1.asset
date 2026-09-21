@@ -18,4 +18,5 @@ MonoBehaviour:
   maxPlayers: 5
   minPlayers: 2
   skating: 0
+  useCoopMovement: 1
   rulesPrefab: {fileID: 2557563268552706014, guid: e577977f347deac4f98b6fe5659b1e16, type: 3}

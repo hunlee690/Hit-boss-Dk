@@ -121,6 +121,7 @@ public class CombatController : MonoBehaviour
     public void DealSlideDamage(
         CombatStats target)
     {
+        if (GetComponentInParent<HitBoss.Multiplayer.Skate.SkateCombat>()?.Active == true) return;
         if (target == null ||
             target == stats)
         {
@@ -175,6 +176,7 @@ public class CombatController : MonoBehaviour
     public void DealPunchDamage(
         CombatStats target)
     {
+        if (GetComponentInParent<HitBoss.Multiplayer.Skate.SkateCombat>()?.Active == true) return;
         if (target == null ||
             target == stats)
         {

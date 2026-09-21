@@ -1411,6 +1411,8 @@ GameObject:
   - component: {fileID: 7537415933192693793}
   - component: {fileID: 2911148466459016505}
   - component: {fileID: 984107485197607423}
+  - component: {fileID: 2582864889987157949}
+  - component: {fileID: 3980063860456377843}
   m_Layer: 0
   m_Name: Network player
   m_TagString: Player
@@ -1447,14 +1449,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2449277185
+  GlobalObjectIdHash: 1181376857
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
-  m_InScenePlaced: 1
+  m_InScenePlaced: 0
   ActiveSceneSynchronization: 0
   SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
@@ -1479,6 +1481,75 @@ MonoBehaviour:
   coopMovement: {fileID: 5881560308184974043}
   playerCamera: {fileID: 1031929340156051205}
   participant: {fileID: 7009891744376421725}
+  appearance: {fileID: 2582864889987157949}
+--- !u!114 &2582864889987157949
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2596138052269426035}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d159324f5c30214cbb3ffcd65b1c0ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HitBoss.Multiplayer.PlayerAppearance
+  movement: {fileID: 5674868521609799909}
+  head:
+    allowNone: 1
+    items:
+    - itemName: 
+      icon: {fileID: 0}
+      equippedByDefault: 0
+      objectsToEnable:
+      - {fileID: 1033449125086209502}
+    - itemName: glasses
+      icon: {fileID: 0}
+      equippedByDefault: 0
+      objectsToEnable:
+      - {fileID: 4102351063382539221}
+    - itemName: helmet
+      icon: {fileID: 0}
+      equippedByDefault: 0
+      objectsToEnable:
+      - {fileID: 1727695272446744301}
+  body:
+    allowNone: 1
+    items:
+    - itemName: def
+      icon: {fileID: 0}
+      equippedByDefault: 1
+      objectsToEnable:
+      - {fileID: 6075989007257654355}
+  bag:
+    allowNone: 1
+    items:
+    - itemName: bag
+      icon: {fileID: 0}
+      equippedByDefault: 0
+      objectsToEnable:
+      - {fileID: 7243395712591282602}
+  skates:
+    allowNone: 1
+    items:
+    - itemName: skate 1
+      icon: {fileID: 0}
+      equippedByDefault: 1
+      objectsToEnable:
+      - {fileID: 7460049352055835999}
+--- !u!114 &3980063860456377843
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2596138052269426035}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cad8f4c9846150a4fbf1c82967164342, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HitBoss.Multiplayer.Skate.SkateCombat
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &2633227925161720342
 GameObject:
   m_ObjectHideFlags: 0
@@ -4056,7 +4127,7 @@ Camera:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9116266724802981435}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_ClearFlags: 1
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
@@ -4107,7 +4178,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9116266724802981435}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!114 &5585865066913450950
 MonoBehaviour:
   m_ObjectHideFlags: 0

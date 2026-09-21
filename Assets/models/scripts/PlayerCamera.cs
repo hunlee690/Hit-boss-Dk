@@ -90,6 +90,8 @@ public class PlayerCamera : MonoBehaviour
         bool playerIsJumping =
             playerController != null &&
             playerController.IsJumping;
+        var coop = target.GetComponent<CoopPlayerController>();
+        playerIsJumping |= coop != null && coop.enabled && coop.IsJumping;
 
         if (!playerIsJumping)
         {

@@ -12,6 +12,7 @@ namespace HitBoss.Multiplayer
         [Range(2, 8)] public int maxPlayers = 5;
         [Range(1, 8)] public int minPlayers = 2;
         public bool skating;
+        public bool useCoopMovement;
         public NetworkModeRules rulesPrefab;
 
         public void ValidateConfiguration()

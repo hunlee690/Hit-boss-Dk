@@ -17,12 +17,16 @@ namespace HitBoss.Multiplayer
         public string menuScene = "main menu";
         public NetworkModeRules ActiveRules { get; private set; }
         GameObject menuRig;
+        PlayerCustomizationManager menuCustomization;
+        public NetworkLoadout CurrentLoadout { get; private set; }
+        PauseMenu scenePause;
         bool callbacksBound, returning, quitting;
         public void BindMenu(GameObject rig)
         {
             // Scene synchronization may recreate the menu; keep only its current preview rig.
             if (menuRig != null && menuRig != rig) { menuRig.SetActive(false); Destroy(menuRig); }
             menuRig = rig; returning = false;
+            menuCustomization = FindFirstObjectByType<PlayerCustomizationManager>(FindObjectsInactive.Include);
         }
 
         void Awake()
@@ -40,15 +44,17 @@ namespace HitBoss.Multiplayer
         }
         void Update()
         {
+            if (menuCustomization != null) CurrentLoadout = NetworkLoadout.Capture(menuCustomization);
             if (network.IsListening && !callbacksBound)
             {
                 BindSceneCallbacks();
             }
             if (!network.IsListening) callbacksBound = false;
-            if (RoomManager.Instance != null && RoomManager.Instance.InMatch && Keyboard.current?.escapeKey.wasPressedThisFrame == true)
+            if (scenePause == null && RoomManager.Instance != null && RoomManager.Instance.InMatch && Keyboard.current?.escapeKey.wasPressedThisFrame == true)
             {
                 var unlock = Cursor.lockState != CursorLockMode.None;
                 Cursor.lockState = unlock ? CursorLockMode.None : CursorLockMode.Locked; Cursor.visible = unlock;
+                network.LocalClient?.PlayerObject?.GetComponent<NetworkPlayer>()?.SetPaused(unlock);
             }
         }
         public async Task WaitForPlayersAsync(int count, CancellationToken cancellation)
@@ -71,6 +77,7 @@ namespace HitBoss.Multiplayer
         }
         void SceneLoaded(Scene scene, LoadSceneMode mode)
         {
+            scenePause = FindFirstObjectByType<PauseMenu>();
             if (RoomManager.Instance?.Room == null || !network.IsListening || scene.name == menuScene) return;
             if (menuRig != null) { menuRig.SetActive(false); Destroy(menuRig); menuRig = null; }
             // These managers run local-only AI/match loops. Online mode rules take their place.
@@ -88,6 +95,15 @@ namespace HitBoss.Multiplayer
                 var pose = ActiveRules.SpawnPose(i);
                 var player = Instantiate(playerPrefab, pose.position, pose.rotation);
                 player.NetworkObject.SpawnAsPlayerObject(completed[i], true);
+            }
+            var botCount = RoomManager.Instance.BotCount;
+            // Bots never become the host's PlayerObject and never own a camera or input.
+            for (int i = 0; i < botCount; i++)
+            {
+                var pose = ActiveRules.SpawnPose(completed.Count + i);
+                var bot = Instantiate(playerPrefab, pose.position, pose.rotation);
+                bot.PrepareBot(i + 1);
+                bot.NetworkObject.Spawn(true);
             }
             ActiveRules.BeginServerMatch();
         }
@@ -115,8 +131,9 @@ namespace HitBoss.Multiplayer
         void OnGUI()
         {
             if (RoomManager.Instance?.InMatch != true) return;
+            if (ActiveRules is HitBoss.Multiplayer.Skate.SkateMatchRules) return;
             GUI.Box(new Rect(16, 16, 330, 60), "Online free play • " + (RoomManager.Instance.Mode?.displayName ?? "Room") + "\nEsc: show cursor • combat rules coming next");
-            if (Cursor.lockState == CursorLockMode.None && GUI.Button(new Rect(24, 82, 140, 36), "Leave room")) _ = RoomManager.Instance.LeaveAsync();
+            if (scenePause == null && Cursor.lockState == CursorLockMode.None && GUI.Button(new Rect(24, 82, 140, 36), "Leave room")) _ = RoomManager.Instance.LeaveAsync();
         }
         void OnApplicationQuit() { quitting = true; }
         void OnDestroy()

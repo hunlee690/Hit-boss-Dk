@@ -667,7 +667,7 @@ public class PlayerCustomizationManager : MonoBehaviour
         return GetEquippedIndex(currentCategory);
     }
 
-    int GetEquippedIndex(Category category)
+    public int GetEquippedIndex(Category category)
     {
         switch (category)
         {

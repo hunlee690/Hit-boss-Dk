@@ -400,11 +400,7 @@ public class RagdollController : MonoBehaviour
             rootRigidbody.isKinematic =
                 false;
 
-            rootRigidbody.linearVelocity =
-                Vector3.zero;
-
-            rootRigidbody.angularVelocity =
-                Vector3.zero;
+            ResetVelocity(rootRigidbody);
         }
 
 
@@ -463,11 +459,7 @@ public class RagdollController : MonoBehaviour
                     Vector3.up
                 );
 
-            rootRigidbody.linearVelocity =
-                Vector3.zero;
-
-            rootRigidbody.angularVelocity =
-                Vector3.zero;
+            ResetVelocity(rootRigidbody);
         }
         else
         {
@@ -757,11 +749,7 @@ public class RagdollController : MonoBehaviour
 
         if (rootRigidbody != null)
         {
-            rootRigidbody.linearVelocity =
-                Vector3.zero;
-
-            rootRigidbody.angularVelocity =
-                Vector3.zero;
+            ResetVelocity(rootRigidbody);
 
             rootRigidbody.isKinematic =
                 true;
@@ -778,11 +766,7 @@ public class RagdollController : MonoBehaviour
             }
 
 
-            body.linearVelocity =
-                Vector3.zero;
-
-            body.angularVelocity =
-                Vector3.zero;
+            ResetVelocity(body);
 
             body.isKinematic =
                 false;
@@ -808,6 +792,13 @@ public class RagdollController : MonoBehaviour
     }
 
 
+    static void ResetVelocity(Rigidbody body)
+    {
+        if (body == null || body.isKinematic) return;
+        body.linearVelocity = Vector3.zero;
+        body.angularVelocity = Vector3.zero;
+    }
+
     void DisableRagdollPhysics()
     {
         foreach (Rigidbody body
@@ -820,11 +811,7 @@ public class RagdollController : MonoBehaviour
             }
 
 
-            body.linearVelocity =
-                Vector3.zero;
-
-            body.angularVelocity =
-                Vector3.zero;
+            ResetVelocity(body);
 
             body.isKinematic =
                 true;

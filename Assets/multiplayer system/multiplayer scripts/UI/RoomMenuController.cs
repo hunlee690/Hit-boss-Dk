@@ -13,6 +13,7 @@ namespace HitBoss.Multiplayer
         public GameObject window, createArea, roomArea;
         public Button matterButton, closeButton, createButton, joinButton, leaveButton, readyButton, startButton, copyButton, refreshButton;
         public Button friendsTab, invitesTab, previousMode, nextMode;
+        public Button onlineButton, botsButton;
         public TMP_InputField codeInput;
         public TMP_Text codeText, modeText, statusText, rosterTitle, rightTitle, emptyFriends, emptyPlayers, badge;
         public RectTransform playerContent, friendContent;
@@ -30,6 +31,8 @@ namespace HitBoss.Multiplayer
             matterButton.onClick.AddListener(Open);
             closeButton.onClick.AddListener(() => window.SetActive(false));
             createButton.onClick.AddListener(() => _ = manager.CreateAsync(selectedMode));
+            if (onlineButton != null) onlineButton.onClick.AddListener(() => _ = manager.FindOnlineAsync(selectedMode));
+            if (botsButton != null) botsButton.onClick.AddListener(() => _ = manager.ToggleBotsAsync());
             joinButton.onClick.AddListener(() => _ = manager.JoinAsync(codeInput.text));
             leaveButton.onClick.AddListener(() => _ = manager.LeaveAsync());
             readyButton.onClick.AddListener(() => _ = manager.ReadyAsync());
@@ -43,6 +46,17 @@ namespace HitBoss.Multiplayer
             window.SetActive(false); Render();
         }
         public void Open() { window.SetActive(true); window.transform.SetAsLastSibling(); Render(); }
+        public void FindOnlineMode(string scene)
+        {
+            selectedMode = Array.FindIndex(manager.modes, m => m.sceneName == scene);
+            Open();
+            if (selectedMode >= 0) _ = manager.FindOnlineAsync(selectedMode);
+        }
+        void Update()
+        {
+            if (manager != null && window.activeSelf && manager.PublicMatch && manager.IsHost && !manager.InMatch && !manager.Busy && manager.SearchSeconds > 0)
+                statusText.text = "Finding players… starting in " + manager.SearchSeconds + "s. Empty places will use bots.";
+        }
         void ChangeMode(int direction)
         {
             if (manager.modes.Length == 0) return;
@@ -69,21 +83,28 @@ namespace HitBoss.Multiplayer
             if (inRoom && manager.Mode != null) selectedMode = Array.IndexOf(manager.modes, manager.Mode);
             var selected = manager.modes.Length > 0 ? manager.modes[Mathf.Clamp(selectedMode, 0, manager.modes.Length - 1)] : null;
             modeText.text = selected != null ? selected.displayName + "  •  " + selected.minPlayers + "–" + (inRoom ? Math.Min(selected.maxPlayers, room.MaxPlayers) : selected.maxPlayers) + " players" : "No modes configured";
-            previousMode.interactable = nextMode.interactable = !manager.Busy && (!inRoom || manager.IsHost && !room.IsLocked);
+            previousMode.interactable = nextMode.interactable = !manager.Busy && (!inRoom || manager.IsHost && !manager.PublicMatch && !room.IsLocked);
             statusText.text = manager.Status;
             createArea.SetActive(!inRoom); roomArea.SetActive(inRoom);
             createButton.interactable = joinButton.interactable = !manager.Busy && online?.Ready == true && selected != null;
+            if (onlineButton != null) onlineButton.interactable = createButton.interactable;
+            if (botsButton != null)
+            {
+                botsButton.gameObject.SetActive(inRoom && manager.IsHost && !manager.PublicMatch);
+                botsButton.interactable = inRoom && !manager.Busy && !room.IsLocked;
+                botsButton.GetComponentInChildren<TMP_Text>().text = manager.FillWithBots ? "Remove bots" : "Add bots";
+            }
             codeInput.interactable = !manager.Busy;
             if (inRoom)
             {
                 codeText.text = room.Code;
-                readyButton.gameObject.SetActive(!manager.IsHost);
+                readyButton.gameObject.SetActive(!manager.IsHost && !manager.PublicMatch);
                 readyButton.GetComponentInChildren<TMP_Text>().text = UnityRoomService.IsReady(room, room.CurrentPlayer) ? "Not ready" : "Ready";
                 readyButton.interactable = !manager.Busy && !room.IsLocked;
                 startButton.gameObject.SetActive(manager.IsHost); startButton.interactable = manager.CanStart;
             }
             leaveButton.interactable = copyButton.interactable = refreshButton.interactable = !manager.Busy;
-            rosterTitle.text = inRoom ? "PLAYERS  " + room.PlayerCount + "/" + room.MaxPlayers : "YOUR PRIVATE ROOM";
+            rosterTitle.text = inRoom ? "PLAYERS  " + room.PlayerCount + " + " + manager.BotCount + " bots / " + room.MaxPlayers : "CHOOSE HOW TO PLAY";
             Clear(playerContent); Clear(friendContent);
             emptyPlayers.gameObject.SetActive(!inRoom);
             if (inRoom)
@@ -93,6 +114,7 @@ namespace HitBoss.Multiplayer
                     if (player.Id == room.CurrentPlayer.Id) description += " • You";
                     Row(playerContent, UnityRoomService.PlayerValue(player, "name"), description);
                 }
+            if (inRoom) for (int i = 0; i < manager.BotCount; i++) Row(playerContent, "Bot " + (i + 1), "Computer player • Ready");
             invitesTab.GetComponentInChildren<TMP_Text>().text = "Invites (" + manager.Invitations.Count + ")";
             rightTitle.text = showInvites ? "RECEIVED INVITATIONS" : "INVITE FRIENDS";
             var count = 0;

@@ -1,36 +1,29 @@
-# Private multiplayer rooms
+# Multiplayer
 
-Open the main menu and use the existing Matter button. Create a private room, share its code or invite an online friend, select a mode, then wait for guests to press Ready. The host starts everyone together. Closing the panel keeps the room active; Leave room closes it for the host or removes a guest. Host departure ends the session; host migration is intentionally not enabled.
+Matter opens private rooms: create a room, invite friends or share the code, choose a mode, add bots if needed, and start together. Online Match searches the selected mode and waits 15 seconds before filling empty slots with bots. Friends must actively enter matchmaking to join. Rooms lock when a match starts; the host leaving ends the match.
 
-## Organization and extension
+## Skate mode
 
-- `multiplayer scripts/Rooms`: Unity session adapter and room lifecycle.
-- `multiplayer scripts/Invites`: ten-minute invitations sent through Unity Friends; acceptance is explicit.
-- `multiplayer scripts/Network`: Relay/Netcode connections, synchronized scene loading, owner movement and animation, local camera control.
-- `multiplayer scripts/Modes`: mode definitions and replaceable `NetworkModeRules` adapters.
-- `multiplayer scripts/UI`: Matter room menu and reusable list rows.
-- `multiplayer scripts/Editor`: one-time menu/prefab builder, available under Tools > Hit Boss.
-- `multiplayer prefabs`: shared runtime manager, network player, rule adapter and row.
-- `multiplayer modes`: definitions linked to the three existing scenes.
+Left mouse: slide. Right mouse: punch. Middle mouse: throw a bomb or place a mine. Pickups restore stamina or supply items. The host checks attack range, walls, cooldowns, stamina, damage, deaths, respawns, inventory, and scores. Bots chase and attack opponents. Health, stamina, kills/deaths, time, and final standings appear in the existing HUD. Kills and deaths update the owning human's profile; bots never write profile progress.
 
-To add a mode, create a Multiplayer Mode asset, give it a stable unique ID, set its scene/player limits, assign a rules prefab derived from NetworkModeRules, and add it to the Multiplayer Manager prefab's modes array. Include the scene in Build Settings. The room menu automatically includes the new definition. Keep combat, scoring, teams and winning logic in the mode adapter, with server-authoritative network state. Room and invitation code should not need changes. A room's capacity is fixed when it is created: the menu shows the lower of that capacity and the selected mode's limit. Create a fresh room if a new mode requires more players than that capacity. The first adapter reuses skate-mode spawn points; other maps use a ground-projected origin fallback. New mode adapters should supply their own authored spawn positions.
+Esc opens pause in every mode. Online pause blocks your input while the match continues. Offline pause freezes the game. Resume restores the selected controller; Leave returns to the menu.
 
-## Current scope
+Other modes retain their movement preview and existing offline gameplay. Only skate has online combat and scoring. Player movement remains owner-controlled and matches run on a player host; this is not an anti-cheat or trusted ranked economy.
 
-The initial shared-movement adapter supports online free play in the existing scenes. Local AI/match managers and player combat/throwables are disabled online because they are not network-authoritative. Networked damage, ragdolls, bombs, scores, match results and remote cosmetic choices are not implemented in this pass. Offline play retains its existing mode managers. Private-room profile progression must not be used for a trusted ranked economy until authoritative results exist.
+## Organization
 
-The Unity project uses the previously linked production Authentication/Friends setup plus Multiplayer Services 2.3.3, Netcode for GameObjects 2.13.2 and Unity Transport. Lobby's dashboard setup is complete and explicitly reports that the service is enabled; Relay's production dashboard is accessible. Relay allocations start when the host starts a match. No paid service upgrade was enrolled. Cloud service runtime behavior still needs your live verification.
+- Rooms: session lifecycle and public search.
+- Invites: friends invitations.
+- Network: shared avatars, movement, appearance, bots, and scene connections.
+- Modes: reusable mode definitions and rule interface.
+- Skate: three scripts for combat state, match rules/HUD, and network items.
+- UI: room menu and player rows.
+- multiplayer prefabs / multiplayer modes: configured assets.
 
-## Your play-test checklist
+Add a mode by creating a MultiplayerMode asset and a NetworkModeRules prefab, adding its scene to Build Settings, then adding the definition to the Multiplayer Manager. Existing room and invitation code can be reused. Use the same updated build on every device (room protocol 3).
 
-No Play-mode, live service, build or multiplayer runtime tests were run, at your request. Scripts were imported and the menu/prefabs were generated in Edit mode.
+## Verification
 
-1. Build and run a second client on another computer/account (or use a separate authentication profile; two clients must have different player IDs).
-2. In Matter, create a room on A and join its code on B. Check both names, host badge and ready states.
-3. Change mode on A. B must ready up again. A cannot start before the minimum players are present and ready.
-4. With both accounts already friends and online, send an invitation. Check Matter's invite badge, Join and Dismiss. Offline friends cannot be invited.
-5. Start together. Both clients should load the selected scene, see each other move/jump and have only their own camera/input. Repeat with each mode.
-6. Press Escape in the shared scene, then Leave room. Check return to the main menu. Repeat after the host exits and after an interrupted connection.
-7. Check invalid/full/closed room codes, repeated clicks, reopening the panel and solo Play after leaving.
+Play-mode host checks passed for punch damage and cooldowns, one-time kill/death scoring, respawn, stamina/bomb pickups, throwing, mine damage and owner exclusion, slide knockdown/recovery, bomb explosion scoring, results, online pause, and offline pause/resume/leave in all three modes. No runtime warnings or errors appeared in these checks. Temporary setup/build/test scripts were removed after wiring the assets.
 
-If anything fails, send the first red Console error and which checklist step triggered it. The original menu was backed up before installation in `Library/CodexMultiplayerBackup/main menu.before-multiplayer.unity`.
+Cloud discovery and a second account joining a room were checked previously. Combat between two separate game clients still needs a two-device test. Create a private skate room, join its code on the second device, ready/start, and confirm attacks, health, respawns, standings, and leaving on both screens.

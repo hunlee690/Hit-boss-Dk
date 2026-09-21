@@ -8,21 +8,55 @@ namespace HitBoss.Multiplayer
     // Only this adapter knows how Unity stores room and ready data.
     public sealed class UnityRoomService
     {
-        public const string Version = "1";
+        public const string Version = "3";
         readonly IMultiplayerService service;
         public UnityRoomService(IMultiplayerService service = null) { this.service = service ?? MultiplayerService.Instance; }
-        public Task<IHostSession> CreateAsync(MultiplayerMode mode, string username) => service.CreateSessionAsync(new SessionOptions
+        public static async Task RetryAsync(Func<Task> action)
         {
-            Name = "Private room", Type = "hitboss-private", IsPrivate = true, MaxPlayers = mode.maxPlayers,
+            for (int attempt = 0; ; attempt++)
+            {
+                try { await action(); return; }
+                catch (SessionException e) when (attempt < 3 && e.Error == SessionError.RateLimitExceeded)
+                { await Task.Delay(1500 * (attempt + 1)); }
+            }
+        }
+        public Task<IHostSession> CreateAsync(MultiplayerMode mode, string username, bool publicMatch = false) => service.CreateSessionAsync(new SessionOptions
+        {
+            Name = publicMatch ? "Online match" : "Private room", Type = "hitboss-private", IsPrivate = !publicMatch, MaxPlayers = mode.maxPlayers,
             PlayerProperties = PlayerData(username),
             SessionProperties = new Dictionary<string, SessionProperty>
             {
                 { "version", new SessionProperty(Version, VisibilityPropertyOptions.Member) },
                 { "mode", new SessionProperty(mode.modeId, VisibilityPropertyOptions.Member) },
                 { "revision", new SessionProperty(Guid.NewGuid().ToString("N"), VisibilityPropertyOptions.Member) },
-                { "phase", new SessionProperty("room", VisibilityPropertyOptions.Member) }
+                { "phase", new SessionProperty("room", VisibilityPropertyOptions.Member) },
+                { "public", new SessionProperty(publicMatch ? "1" : "0", VisibilityPropertyOptions.Member) },
+                { "bots", new SessionProperty(publicMatch ? "1" : "0", VisibilityPropertyOptions.Member) },
+                { "queue", new SessionProperty(publicMatch ? "hitboss-" + Version + "-" + mode.modeId : "private", VisibilityPropertyOptions.Public, PropertyIndex.String1) }
             }
         });
+        public async Task<ISession> FindPublicAsync(MultiplayerMode mode, string username)
+        {
+            var results = await service.QuerySessionsAsync(new QuerySessionsOptions
+            {
+                Count = 20,
+                FilterOptions = new List<FilterOption>
+                {
+                    new FilterOption(FilterField.StringIndex1, "hitboss-" + Version + "-" + mode.modeId, FilterOperation.Equal),
+                    new FilterOption(FilterField.AvailableSlots, "0", FilterOperation.Greater),
+                    new FilterOption(FilterField.IsLocked, "false", FilterOperation.Equal)
+                }
+            });
+            foreach (var candidate in results.Sessions)
+            {
+                ISession joined;
+                try { joined = await service.JoinSessionByIdAsync(candidate.Id, new JoinSessionOptions { Type = "hitboss-private", PlayerProperties = PlayerData(username) }); }
+                catch (SessionException) { continue; }
+                if (Property(joined, "version") == Version && Property(joined, "mode") == mode.modeId && Property(joined, "public") == "1" && !joined.IsLocked && Property(joined, "phase") == "room") return joined;
+                await joined.LeaveAsync();
+            }
+            return null;
+        }
         public Task<ISession> JoinAsync(string code, string username)
         {
             code = (code ?? "").Trim().ToUpperInvariant();

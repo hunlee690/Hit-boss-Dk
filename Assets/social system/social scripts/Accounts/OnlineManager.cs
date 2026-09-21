@@ -95,7 +95,7 @@ namespace HitBoss.Social
         public void SetStatus(string message) { Status = message; Notify(); }
         public void Report(Exception e)
         {
-            Debug.LogWarning("[Social] " + e.GetType().Name + ": " + e.Message);
+            Debug.LogWarning("[Social] " + e);
             SetStatus(e is ArgumentException || e is InvalidOperationException ? e.Message : "Could not reach online services. Please try again.");
         }
         void OnDestroy()

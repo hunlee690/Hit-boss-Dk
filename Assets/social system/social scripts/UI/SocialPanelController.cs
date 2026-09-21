@@ -83,7 +83,9 @@ namespace HitBoss.Social
             if (existingNameInput != null && profile != null && !existingNameInput.isFocused)
                 existingNameInput.SetTextWithoutNotify(UnityProfileService.BaseName(profile.username));
             bool connected = online.Friends?.Ready == true;
-            refreshButton.GetComponentInChildren<TMP_Text>().text = connected ? "Refresh" : "Retry";
+            // The refresh control may be an icon-only button in the existing menu.
+            var refreshLabel = refreshButton.GetComponentInChildren<TMP_Text>(true);
+            if (refreshLabel != null) refreshLabel.text = connected ? "Refresh" : "Retry";
             searchButton.interactable = connected && !busy;
             requestsButton.interactable = connected && !busy;
             sentButton.interactable = connected && !busy;
