@@ -1,7 +1,9 @@
 using HitBoss.Multiplayer;
+using HitBoss.Multiplayer.Skate;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
@@ -9,22 +11,13 @@ public class PauseMenu : MonoBehaviour
 {
     public GameObject pausePanel;
     public Button resumeButton, quitMatchButton;
-    public string playerTag = "Player", cameraTag = "MainCamera", mainMenuScene = "main menu";
-    PlayerController playerController;
-    CoopPlayerController coop;
-    PlayerCamera playerCamera;
-    CombatController combat;
-    ThrowableInventory inventory;
-    NetworkPlayer onlinePlayer;
-    bool paused, quitting, movementEnabled, coopEnabled, combatEnabled, inventoryEnabled;
-    float previousTimeScale = 1;
+    public string mainMenuScene = "main menu";
+    NetworkPlayer player;
+    bool paused, quitting;
     public bool IsPaused => paused;
+    bool MatchFinished => player != null && player.GetComponent<SkateCombat>()?.Finished.Value == true;
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    static void Install()
-    {
-        SceneManager.sceneLoaded -= EnsurePause;
-        SceneManager.sceneLoaded += EnsurePause;
-    }
+    static void Install() { SceneManager.sceneLoaded -= EnsurePause; SceneManager.sceneLoaded += EnsurePause; }
     static void EnsurePause(Scene scene, LoadSceneMode mode)
     {
         if (scene.name == "main menu") return;
@@ -34,8 +27,17 @@ public class PauseMenu : MonoBehaviour
     }
     void Awake()
     {
-        if (pausePanel == gameObject) { Debug.LogError("PausePanel cannot be the PauseMenu object."); return; }
-        if (pausePanel != null) pausePanel.SetActive(false);
+        if (pausePanel == gameObject) pausePanel = null;
+        if (pausePanel != null)
+        {
+            var canvas = pausePanel.GetComponent<Canvas>();
+            if (canvas == null) canvas = pausePanel.AddComponent<Canvas>();
+            var parentCanvas = pausePanel.transform.parent != null ? pausePanel.transform.parent.GetComponentInParent<Canvas>() : null;
+            if (parentCanvas != null) canvas.sortingLayerID = parentCanvas.sortingLayerID;
+            canvas.overrideSorting = true; canvas.sortingOrder = 32760;
+            if (pausePanel.GetComponent<GraphicRaycaster>() == null) pausePanel.AddComponent<GraphicRaycaster>();
+            pausePanel.SetActive(false);
+        }
         if (resumeButton != null) resumeButton.onClick.AddListener(ResumeMatch);
         if (quitMatchButton != null) quitMatchButton.onClick.AddListener(QuitMatch);
     }
@@ -44,87 +46,39 @@ public class PauseMenu : MonoBehaviour
         if (!quitting && Keyboard.current?.escapeKey.wasPressedThisFrame == true)
         { if (paused) ResumeMatch(); else PauseMatch(); }
     }
-    void FindPlayer()
-    {
-        onlinePlayer = NetworkManager.Singleton?.LocalClient?.PlayerObject?.GetComponent<NetworkPlayer>();
-        if (RoomManager.Instance?.Room != null)
-        {
-            playerController = onlinePlayer != null ? onlinePlayer.movement : null;
-            playerCamera = onlinePlayer != null ? onlinePlayer.playerCamera : null;
-        }
-        else
-        {
-            var player = GameObject.FindGameObjectWithTag(playerTag);
-            playerController = player != null ? player.GetComponentInChildren<PlayerController>(true) : null;
-            playerCamera = playerController != null ? playerController.transform.root.GetComponentInChildren<PlayerCamera>(true) : null;
-        }
-        coop = playerController != null ? playerController.GetComponent<CoopPlayerController>() : null;
-        combat = playerController != null ? playerController.GetComponent<CombatController>() : null;
-        inventory = playerController != null ? playerController.GetComponent<ThrowableInventory>() : null;
-    }
     public void PauseMatch()
     {
         if (paused || quitting) return;
-        FindPlayer();
-        if (RoomManager.Instance?.Room != null && onlinePlayer == null) return;
+        player = NetworkManager.Singleton?.LocalClient?.PlayerObject?.GetComponent<NetworkPlayer>();
         paused = true;
-        if (pausePanel != null) pausePanel.SetActive(true);
-        if (onlinePlayer != null) onlinePlayer.SetPaused(true);
-        else
-        {
-            previousTimeScale = Time.timeScale;
-            Time.timeScale = 0;
-            movementEnabled = playerController != null && playerController.enabled;
-            coopEnabled = coop != null && coop.enabled;
-            combatEnabled = combat != null && combat.enabled;
-            inventoryEnabled = inventory != null && inventory.enabled;
-            if (movementEnabled) { playerController.StopImmediately(); playerController.enabled = false; }
-            if (coopEnabled) { coop.StopImmediately(); coop.enabled = false; }
-            if (combat != null) combat.enabled = false;
-            if (inventory != null) inventory.enabled = false;
-            if (playerCamera != null) playerCamera.enabled = false;
-        }
+        if (pausePanel != null) { pausePanel.transform.SetAsLastSibling(); pausePanel.SetActive(true); }
+        if (player != null) player.SetPaused(true);
         Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
+        var selected = MatchFinished ? quitMatchButton : resumeButton;
+        if (selected != null && EventSystem.current != null) EventSystem.current.SetSelectedGameObject(selected.gameObject);
     }
     public void ResumeMatch()
     {
         if (!paused || quitting) return;
         if (pausePanel != null) pausePanel.SetActive(false);
-        if (onlinePlayer != null) onlinePlayer.SetPaused(false);
-        else
-        {
-            Time.timeScale = previousTimeScale;
-            if (playerController != null) playerController.enabled = movementEnabled;
-            if (coop != null) coop.enabled = coopEnabled;
-            if (combat != null) combat.enabled = combatEnabled;
-            if (inventory != null) inventory.enabled = inventoryEnabled;
-            if (playerCamera != null) playerCamera.enabled = true;
-        }
+        if (player != null) player.SetPaused(false);
         paused = false;
-        Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false;
+        Cursor.lockState = MatchFinished ? CursorLockMode.None : CursorLockMode.Locked;
+        Cursor.visible = MatchFinished;
     }
     public async void QuitMatch()
     {
         if (quitting) return;
         quitting = true;
-        if (onlinePlayer == null) Time.timeScale = previousTimeScale;
         if (RoomManager.Instance?.Room != null)
         {
             await RoomManager.Instance.LeaveAsync();
             if (this != null) quitting = false;
             return;
         }
-        FindPlayer();
-        if (playerController != null)
-        {
-            var rig = playerController.transform.root.gameObject;
-            rig.SetActive(false);
-            Destroy(rig);
-        }
         Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
         SceneManager.LoadScene(mainMenuScene);
     }
-    void OnDestroy() { if (paused && onlinePlayer == null) Time.timeScale = previousTimeScale; }
     void OnGUI()
     {
         if (!paused || pausePanel != null) return;

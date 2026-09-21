@@ -69,8 +69,6 @@ namespace HitBoss.Social
             foreach (var p in FindObjectsByType<MatchParticipant>(FindObjectsSortMode.None))
                 if (!p.isAI && p.GetComponentInParent<HitBoss.Multiplayer.NetworkPlayer>() == null) { p.playerName = Profiles.Current.username; p.RefreshName(); }
         }
-        public void RecordKill() { if (Ready) Profiles.RecordProgress(1, 0, xpPerKill); }
-        public void RecordDeath() { if (Ready) Profiles.RecordProgress(0, 1, 0); }
         void Update() { if (Time.unscaledTime >= nextSave) { nextSave = Time.unscaledTime + saveInterval; Flush(); } }
         public async void Flush()
         {

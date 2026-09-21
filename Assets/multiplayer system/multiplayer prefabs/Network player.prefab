@@ -1693,12 +1693,10 @@ GameObject:
   - component: {fileID: 5036637998405760351}
   - component: {fileID: 5674868521609799909}
   - component: {fileID: 7009891744376421725}
-  - component: {fileID: 1013219027378598514}
-  - component: {fileID: 7990014476403455553}
-  - component: {fileID: 3123181482987757816}
   - component: {fileID: 1284531314580901289}
   - component: {fileID: 5881560308184974043}
   - component: {fileID: 3686961045493525696}
+  - component: {fileID: 7128597012142023713}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1832,70 +1830,6 @@ MonoBehaviour:
   kills: 0
   deaths: 0
   visualRoot: {fileID: 0}
---- !u!114 &1013219027378598514
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3399289482480405679}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0c8045d040834ab4d97900bac3540b24, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CombatStats
-  maxHealth: 3
-  maxStamina: 3
---- !u!114 &7990014476403455553
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3399289482480405679}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7821a81ba999ea64099a46b4480a4623, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CombatController
-  stats: {fileID: 1013219027378598514}
-  playerController: {fileID: 5674868521609799909}
-  slideStaminaCost: 2
-  slideDamage: 1
-  slideRagdollTime: 2
-  slideForce: 2.5
-  slideUpwardForce: 0.2
-  punchStaminaCost: 3
-  punchDamage: 3
-  punchRagdollTime: 1.25
-  punchForce: 4.5
-  punchUpwardForce: 0.5
---- !u!114 &3123181482987757816
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3399289482480405679}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4fb1945197d1f3e429b1dc8bb9d36a45, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ThrowableInventory
-  playerController: {fileID: 5674868521609799909}
-  ownerStats: {fileID: 1013219027378598514}
-  bombPrefab: {fileID: 6322852915340389648, guid: 818b76f248b020546ba60ed43ea59dd2, type: 3}
-  minePrefab: {fileID: 6322852915340389648, guid: ade88653542f6824387798a7da345c09, type: 3}
-  throwPoint: {fileID: 1114749276601652738}
-  throwDirectionSource: {fileID: 7247696163974133366}
-  bombForwardSpeed: 12
-  bombUpwardSpeed: 4
-  minesPerPickup: 3
-  minePlaceDistance: 1
-  mineRayHeight: 2
-  groundLayers:
-    serializedVersion: 2
-    m_Bits: 0
 --- !u!114 &1284531314580901289
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1989,6 +1923,37 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &7128597012142023713
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3399289482480405679}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cb6643da026a674eb927659b29be42f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HitBoss.Multiplayer.Skate.SkatePlayerSettings
+  maxHealth: 3
+  maxStamina: 3
+  slideStaminaCost: 2
+  slideDamage: 1
+  punchStaminaCost: 3
+  punchDamage: 3
+  slideRagdollTime: 2
+  slideForce: 2.5
+  slideUpwardForce: 0.2
+  punchRagdollTime: 1.25
+  punchForce: 4.5
+  punchUpwardForce: 0.5
+  throwPoint: {fileID: 1114749276601652738}
+  bombForwardSpeed: 12
+  bombUpwardSpeed: 4
+  minePlaceDistance: 1
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!1 &3469225476297683797
 GameObject:
   m_ObjectHideFlags: 0
@@ -3501,7 +3466,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51f9ba418f0d1d94d8e371dc706f6489, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatHitDetector
-  combatController: {fileID: 7990014476403455553}
+  combatController: {fileID: 0}
   punchHitPoint: {fileID: 1562109385062547707}
   slideHitPoint: {fileID: 710402205275250706}
   punchRadius: 0.8

@@ -16,13 +16,10 @@ namespace HitBoss.Multiplayer.Skate
         float nextPickup, nextHud;
         void Awake()
         {
-            var legacy = FindFirstObjectByType<GameModeManager>();
+            var legacy = FindFirstObjectByType<SkateArena>();
             spawnPoints = legacy != null ? legacy.spawnPoints : null;
             if (legacy != null) { matchDuration = legacy.matchDuration; respawnDelay = legacy.respawnDelay; }
-            var spawner = FindFirstObjectByType<ArenaPickupSpawner>();
-            if (spawner != null) { pickupPoints = spawner.spawnPoints; spawner.enabled = false; spawner.StopAllCoroutines(); }
-            foreach (var pickup in FindObjectsByType<ThrowablePickup>(FindObjectsSortMode.None)) pickup.gameObject.SetActive(false);
-            foreach (var pickup in FindObjectsByType<StaminaPickup>(FindObjectsSortMode.None)) pickup.gameObject.SetActive(false);
+            pickupPoints = legacy != null ? legacy.pickupPoints : null;
             hud = FindFirstObjectByType<MatchHUD>();
             if (hud != null) { hud.enabled = false; LayoutHud(); if (hud.endPanel != null) hud.endPanel.SetActive(false); }
         }
@@ -36,6 +33,10 @@ namespace HitBoss.Multiplayer.Skate
             LayoutText(hud.throwableText, canvas.transform, new Vector2(.62f, .9f), Vector2.one, 18);
             LayoutText(hud.rankingText, canvas.transform, new Vector2(0, .55f), new Vector2(.55f, .85f), 18);
             if (hud.endPanel == null) return;
+            var group = hud.endPanel.GetComponent<CanvasGroup>();
+            if (group == null) group = hud.endPanel.AddComponent<CanvasGroup>();
+            group.blocksRaycasts = false; group.interactable = false;
+            foreach (var graphic in hud.endPanel.GetComponentsInChildren<UnityEngine.UI.Graphic>(true)) graphic.raycastTarget = false;
             var panel = hud.endPanel.GetComponent<RectTransform>();
             panel.SetParent(canvas.transform, false); panel.anchorMin = new Vector2(.08f, .18f); panel.anchorMax = new Vector2(.92f, .82f);
             panel.offsetMin = panel.offsetMax = Vector2.zero;
@@ -97,7 +98,7 @@ namespace HitBoss.Multiplayer.Skate
         public void SpawnProjectile(SkateCombat owner, bool isBomb)
         {
             if (!NetworkManager.Singleton.IsServer || !Running) return;
-            var inventory = owner.Player.movement.GetComponent<ThrowableInventory>();
+            var inventory = owner.Player.movement.GetComponent<SkatePlayerSettings>();
             var forward = owner.Player.movement.transform.forward; forward.y = 0; forward.Normalize();
             var position = isBomb ? (inventory.throwPoint != null ? inventory.throwPoint.position : owner.Position + Vector3.up) : owner.Position - forward * inventory.minePlaceDistance;
             if (!isBomb && Physics.Raycast(position + Vector3.up * 2, Vector3.down, out var hit, 6, inventory.groundLayers, QueryTriggerInteraction.Ignore)) position = hit.point + Vector3.up * .05f;
@@ -120,7 +121,7 @@ namespace HitBoss.Multiplayer.Skate
             if (hud.timerText != null) hud.timerText.text = (remaining / 60).ToString("00") + ":" + (remaining % 60).ToString("00");
             if (local.Finished.Value)
             {
-                if (hud.endPanel != null) hud.endPanel.SetActive(true);
+                if (hud.endPanel != null) hud.endPanel.SetActive(!local.Player.IsPaused);
                 bool tie = sorted.Length > 1 && sorted[0].Kills.Value == sorted[1].Kills.Value && sorted[0].Deaths.Value == sorted[1].Deaths.Value;
                 if (hud.resultText != null) { hud.resultText.richText = false; hud.resultText.text = (tie ? "DRAW" : sorted[0].Player.Username.Value + " WINS!") + "\n" + text + "\nEsc: leave match"; }
             }

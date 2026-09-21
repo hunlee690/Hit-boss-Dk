@@ -1,22 +1,7 @@
 using UnityEngine;
 
+// Retains the imported clip event; the host controls projectile release timing.
 public class ThrowableAnimationEvents : MonoBehaviour
 {
-    ThrowableInventory inventory;
-
-
-    void Awake()
-    {
-        inventory =
-            GetComponentInParent<ThrowableInventory>();
-    }
-
-
-    public void ReleaseThrowable()
-    {
-        if (inventory != null)
-        {
-            inventory.ReleaseThrowable();
-        }
-    }
+    public void ReleaseThrowable() { }
 }

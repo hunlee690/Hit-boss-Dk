@@ -26,7 +26,7 @@ namespace HitBoss.Multiplayer
             bool allowed = IsOwner && !IsBot.Value && !paused && (combat == null || !combat.Active || combat.CanAct);
             movement.enabled = allowed && !mode.useCoopMovement;
             if (coopMovement != null) coopMovement.enabled = allowed && mode.useCoopMovement;
-            if (playerCamera != null) playerCamera.enabled = IsOwner && !IsBot.Value && !paused;
+            if (playerCamera != null) playerCamera.enabled = IsOwner && !IsBot.Value && !paused && !(combat != null && combat.Active && combat.Finished.Value);
         }
         MultiplayerMode mode;
         int pendingBotNumber;
@@ -48,9 +48,6 @@ namespace HitBoss.Multiplayer
             body.isKinematic = !local;
             foreach (var collider in GetComponentsInChildren<Collider>(true)) collider.enabled = false;
             if (local) movement.GetComponent<CapsuleCollider>().enabled = true;
-            // Local combat cannot be shared safely until a mode supplies authoritative combat rules.
-            foreach (var combat in GetComponentsInChildren<CombatController>(true)) combat.enabled = false;
-            foreach (var inventory in GetComponentsInChildren<ThrowableInventory>(true)) inventory.enabled = false;
         }
         public override void OnNetworkSpawn()
         {

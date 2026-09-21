@@ -27,8 +27,8 @@ namespace HitBoss.Multiplayer.Skate
         public Vector3 Position => Player.movement.transform.position;
         public int MaxHealth => stats.maxHealth;
         public int MaxStamina => stats.maxStamina;
-        CombatStats stats;
-        CombatController tuning;
+        SkatePlayerSettings stats;
+        SkatePlayerSettings tuning;
         RagdollController ragdoll;
         Rigidbody body;
         double nextAttack, recoverAt, nextStamina, invulnerableUntil;
@@ -43,8 +43,8 @@ namespace HitBoss.Multiplayer.Skate
             Player = GetComponent<NetworkPlayer>();
             Active = MatchConnection.Instance?.ActiveRules is SkateMatchRules;
             if (!Active) { enabled = false; return; }
-            stats = Player.movement.GetComponent<CombatStats>();
-            tuning = Player.movement.GetComponent<CombatController>();
+            stats = Player.movement.GetComponent<SkatePlayerSettings>();
+            tuning = stats;
             ragdoll = Player.movement.GetComponent<RagdollController>();
             body = Player.movement.GetComponent<Rigidbody>();
             Players.Add(this);

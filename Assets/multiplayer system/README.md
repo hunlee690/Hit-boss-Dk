@@ -1,14 +1,14 @@
-# Multiplayer
+# Online multiplayer
 
-Matter opens private rooms: create a room, invite friends or share the code, choose a mode, add bots if needed, and start together. Online Match searches the selected mode and waits 15 seconds before filling empty slots with bots. Friends must actively enter matchmaking to join. Rooms lock when a match starts; the host leaving ends the match.
+Play selects a mode and starts online matchmaking directly. There is no solo/offline route. Matter opens private rooms: create a room, invite friends or share the code, choose a mode, add bots if needed, and start together. Online Match searches the selected mode and waits 15 seconds before filling empty slots with bots. Friends must actively enter matchmaking to join. Rooms lock when a match starts; the host leaving ends the match.
 
 ## Skate mode
 
 Left mouse: slide. Right mouse: punch. Middle mouse: throw a bomb or place a mine. Pickups restore stamina or supply items. The host checks attack range, walls, cooldowns, stamina, damage, deaths, respawns, inventory, and scores. Bots chase and attack opponents. Health, stamina, kills/deaths, time, and final standings appear in the existing HUD. Kills and deaths update the owning human's profile; bots never write profile progress.
 
-Esc opens pause in every mode. Online pause blocks your input while the match continues. Offline pause freezes the game. Resume restores the selected controller; Leave returns to the menu.
+Esc opens pause in every mode while the online match continues. Pause is drawn above match results, which never intercept clicks. Resume restores input during a running match; Leave closes the room connection and returns to the menu.
 
-Other modes retain their movement preview and existing offline gameplay. Only skate has online combat and scoring. Player movement remains owner-controlled and matches run on a player host; this is not an anti-cheat or trusted ranked economy.
+Other modes retain their online movement preview. Solo mode managers, local AI, local combat/pickup logic, and six unused solo prefabs were removed. Shared movement, visual assets, and imported animation event receivers remain. Only skate has online combat and scoring. Player movement remains owner-controlled and matches run on a player host; this is not an anti-cheat or trusted ranked economy.
 
 ## Organization
 
@@ -16,7 +16,7 @@ Other modes retain their movement preview and existing offline gameplay. Only sk
 - Invites: friends invitations.
 - Network: shared avatars, movement, appearance, bots, and scene connections.
 - Modes: reusable mode definitions and rule interface.
-- Skate: three scripts for combat state, match rules/HUD, and network items.
+- Skate: combat state, match rules/HUD, network items, player settings, and scene arena settings. Player and arena settings preserve the authored values without depending on solo scripts.
 - UI: room menu and player rows.
 - multiplayer prefabs / multiplayer modes: configured assets.
 
@@ -24,6 +24,7 @@ Add a mode by creating a MultiplayerMode asset and a NetworkModeRules prefab, ad
 
 ## Verification
 
-Play-mode host checks passed for punch damage and cooldowns, one-time kill/death scoring, respawn, stamina/bomb pickups, throwing, mine damage and owner exclusion, slide knockdown/recovery, bomb explosion scoring, results, online pause, and offline pause/resume/leave in all three modes. No runtime warnings or errors appeared in these checks. Temporary setup/build/test scripts were removed after wiring the assets.
+Play-mode host checks passed for punch damage and cooldowns, one-time kill/death scoring, respawn, stamina/bomb pickups, throwing, mine damage and owner exclusion, slide knockdown/recovery, bomb explosion scoring, results, and online pause. The online-only pass additionally checks direct matchmaking, migrated settings, combat/respawn, and post-results Leave using UI raycasts. No runtime warnings or errors appeared in these checks. Temporary setup/build/test scripts were removed after wiring the assets.
 
 Cloud discovery and a second account joining a room were checked previously. Combat between two separate game clients still needs a two-device test. Create a private skate room, join its code on the second device, ready/start, and confirm attacks, health, respawns, standings, and leaving on both screens.
+

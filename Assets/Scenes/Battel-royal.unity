@@ -669,8 +669,6 @@ MonoBehaviour:
   pausePanel: {fileID: 333309352}
   resumeButton: {fileID: 1920787571}
   quitMatchButton: {fileID: 2012790720}
-  playerTag: Player
-  cameraTag: MainCamera
   mainMenuScene: main menu
 --- !u!1 &1754039426
 GameObject:
@@ -681,7 +679,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1754039428}
-  - component: {fileID: 1754039427}
   m_Layer: 0
   m_Name: Battel-royalManager
   m_TagString: Untagged
@@ -689,22 +686,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1754039427
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1754039426}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: da98bd966583065469f2eeb5dc00c976, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BattelRoyalmanager
-  allModeScripts:
-  - 
-  thisModeScripts:
-  - 
 --- !u!4 &1754039428
 Transform:
   m_ObjectHideFlags: 0

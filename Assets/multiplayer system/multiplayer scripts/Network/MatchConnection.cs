@@ -80,8 +80,6 @@ namespace HitBoss.Multiplayer
             scenePause = FindFirstObjectByType<PauseMenu>();
             if (RoomManager.Instance?.Room == null || !network.IsListening || scene.name == menuScene) return;
             if (menuRig != null) { menuRig.SetActive(false); Destroy(menuRig); menuRig = null; }
-            // These managers run local-only AI/match loops. Online mode rules take their place.
-            foreach (var manager in FindObjectsByType<ModeManagerBase>(FindObjectsSortMode.None)) manager.enabled = false;
             var definition = RoomManager.Instance.Mode;
             if (definition != null && definition.rulesPrefab != null) ActiveRules = Instantiate(definition.rulesPrefab);
         }

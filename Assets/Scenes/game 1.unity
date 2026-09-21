@@ -437,8 +437,6 @@ MonoBehaviour:
   pausePanel: {fileID: 1241720530}
   resumeButton: {fileID: 1569070647}
   quitMatchButton: {fileID: 1734698535}
-  playerTag: Player
-  cameraTag: MainCamera
   mainMenuScene: main menu
 --- !u!1001 &1163007755
 PrefabInstance:
@@ -1113,7 +1111,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1366119709}
-  - component: {fileID: 1366119710}
   m_Layer: 0
   m_Name: ArenaPickupSpawner
   m_TagString: Untagged
@@ -1141,38 +1138,6 @@ Transform:
   - {fileID: 1817336904}
   m_Father: {fileID: 2132425763}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1366119710
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1366119708}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80917d339327344438f7913a95fe1ab2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::StaminaPickupSpawner
-  pickups:
-  - name: bomb
-    prefab: {fileID: 6322852915340389648, guid: 04084a81a490dd54d97282e0fe2f1d41, type: 3}
-    weight: 3
-  - name: mine
-    prefab: {fileID: 6322852915340389648, guid: 120f045fb1254bf488b9dd4346d80514, type: 3}
-    weight: 1
-  - name: Stamina
-    prefab: {fileID: 6322852915340389648, guid: e2386b2515495c24da26a329776c48cb, type: 3}
-    weight: 6
-  spawnPoints:
-  - {fileID: 283843648}
-  - {fileID: 1856361929}
-  - {fileID: 1968382572}
-  - {fileID: 1361190067}
-  - {fileID: 1817336904}
-  initialPickupCount: 2
-  maxActivePickups: 3
-  minSpawnDelay: 2
-  maxSpawnDelay: 2
 --- !u!1 &1380471521
 GameObject:
   m_ObjectHideFlags: 0
@@ -2341,32 +2306,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 2132425762}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a2ae2bb536f8d0642b17c7ab61e9f531, type: 3}
+  m_Script: {fileID: 11500000, guid: 6d32aa8f899df3a428b7069c3530492e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameModeManager
-  allModeScripts:
-  - CoopPlayerController
-  thisModeScripts:
-  - PlayerController
-  - CombatController
-  - ThrowableInventory
-  - SimpleAIPlayerBehaviour
-  aiPlayerPrefab: {fileID: 2811032630658427732, guid: 788a347e6cdfe8b4780b30b76441b7f4, type: 3}
-  playerCount: 5
+  m_EditorClassIdentifier: Assembly-CSharp::HitBoss.Multiplayer.Skate.SkateArena
   spawnPoints:
   - {fileID: 1207681634}
   - {fileID: 1163589691}
   - {fileID: 1804546630}
   - {fileID: 65643333}
   - {fileID: 1122503026}
-  respawnDelay: 2
+  pickupPoints:
+  - {fileID: 283843648}
+  - {fileID: 1856361929}
+  - {fileID: 1968382572}
+  - {fileID: 1361190067}
+  - {fileID: 1817336904}
   matchDuration: 180
-  humanPlayerName: Neo
-  aiNames:
-  - Rex
-  - Max
-  - Kai
-  - Zed
+  respawnDelay: 2
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
