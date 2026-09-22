@@ -10,18 +10,21 @@ namespace HitBoss.Multiplayer
     public sealed class RoomMenuController : MonoBehaviour
     {
         public MainMenu mainMenu;
-        public GameObject window, createArea, roomArea;
+        public GameObject window, createArea, roomArea, matchmakingWindow;
         public Button matterButton, closeButton, createButton, joinButton, leaveButton, readyButton, startButton, copyButton, refreshButton;
         public Button friendsTab, invitesTab, previousMode, nextMode;
         public Button onlineButton, botsButton;
         public TMP_InputField codeInput;
         public TMP_Text codeText, modeText, statusText, rosterTitle, rightTitle, emptyFriends, emptyPlayers, badge;
+        public TMP_Text matchmakingStatus;
+        public Button cancelMatchmakingButton;
         public RectTransform playerContent, friendContent;
         public RoomListRow rowPrefab;
         RoomManager manager;
         OnlineManager online;
         int selectedMode;
         bool showInvites;
+        float matchmakingStarted;
         void Start()
         {
             manager = RoomManager.Instance; online = OnlineManager.Instance;
@@ -35,7 +38,8 @@ namespace HitBoss.Multiplayer
             manager.Changed += Render;
             if (online != null) online.Changed += Render;
             matterButton.onClick.AddListener(Open);
-            closeButton.onClick.AddListener(() => window.SetActive(false));
+            closeButton.onClick.AddListener(ClosePrivateMenu);
+            if (cancelMatchmakingButton != null) cancelMatchmakingButton.onClick.AddListener(() => _ = CancelMatchmakingAsync());
             createButton.onClick.AddListener(() => _ = manager.CreateAsync(selectedMode));
             if (onlineButton != null) onlineButton.onClick.AddListener(() => _ = manager.FindOnlineAsync(selectedMode));
             if (botsButton != null) botsButton.onClick.AddListener(() => _ = manager.ToggleBotsAsync());
@@ -49,19 +53,53 @@ namespace HitBoss.Multiplayer
             invitesTab.onClick.AddListener(() => { showInvites = true; Render(); });
             previousMode.onClick.AddListener(() => ChangeMode(-1));
             nextMode.onClick.AddListener(() => ChangeMode(1));
-            window.SetActive(false); Render();
+            window.SetActive(false);
+            if (matchmakingWindow != null) matchmakingWindow.SetActive(false);
+            Render();
         }
-        public void Open() { window.SetActive(true); window.transform.SetAsLastSibling(); Render(); }
+        public void Open()
+        {
+            mainMenu?.HideAllMenus();
+            if (matchmakingWindow != null) matchmakingWindow.SetActive(false);
+            window.SetActive(true); window.transform.SetAsLastSibling(); Render();
+        }
+        void ClosePrivateMenu()
+        {
+            window.SetActive(false);
+            mainMenu?.OpenMainMenu();
+        }
         public void FindOnlineMode(string scene)
         {
             selectedMode = Array.FindIndex(manager.modes, m => m.sceneName == scene);
-            Open();
-            if (selectedMode >= 0) _ = manager.FindOnlineAsync(selectedMode);
+            if (selectedMode < 0) { manager.SetStatus("This mode is not configured for online play."); return; }
+            mainMenu?.HideAllMenus();
+            window.SetActive(false);
+            matchmakingStarted = Time.unscaledTime;
+            if (matchmakingWindow != null) { matchmakingWindow.SetActive(true); matchmakingWindow.transform.SetAsLastSibling(); }
+            RenderMatchmaking();
+            _ = manager.FindOnlineAsync(selectedMode);
         }
         void Update()
         {
-            if (manager != null && window.activeSelf && manager.PublicMatch && manager.IsHost && !manager.InMatch && !manager.Busy && manager.SearchSeconds > 0)
-                statusText.text = "Finding players… starting in " + manager.SearchSeconds + "s. Empty places will use bots.";
+            if (manager != null && matchmakingWindow != null && matchmakingWindow.activeSelf) RenderMatchmaking();
+        }
+        void RenderMatchmaking()
+        {
+            if (matchmakingStatus == null || manager == null) return;
+            if (manager.PublicMatch && manager.IsHost && !manager.InMatch)
+                matchmakingStatus.text = "Finding players...\nMatch starts in " + manager.SearchSeconds + "s\nBots will fill empty places.";
+            else if (manager.PublicMatch && !manager.IsHost)
+                matchmakingStatus.text = "Match found\nWaiting for the host to start...";
+            else if (manager.Busy)
+                matchmakingStatus.text = "Searching for players...  " + Mathf.FloorToInt(Time.unscaledTime - matchmakingStarted) + "s";
+            else matchmakingStatus.text = manager.Status;
+            if (cancelMatchmakingButton != null) cancelMatchmakingButton.interactable = !manager.InMatch && !manager.Busy;
+        }
+        async System.Threading.Tasks.Task CancelMatchmakingAsync()
+        {
+            if (manager.Room != null) await manager.LeaveAsync();
+            if (matchmakingWindow != null) matchmakingWindow.SetActive(false);
+            mainMenu?.OpenGameModes();
         }
         void ChangeMode(int direction)
         {
@@ -82,6 +120,7 @@ namespace HitBoss.Multiplayer
         {
             if (manager == null) return;
             if (badge != null) badge.text = manager.Invitations.Count > 0 ? manager.Invitations.Count + " invite(s)" : manager.Room != null ? "In room" : "";
+            if (matchmakingWindow != null && matchmakingWindow.activeSelf) RenderMatchmaking();
             // Closing the menu preserves the room; no list rebuilding is needed while hidden.
             if (window == null || !window.activeSelf) return;
             var room = manager.Room;

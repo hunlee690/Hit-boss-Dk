@@ -82,6 +82,7 @@ public class MainMenu : MonoBehaviour
     public void OpenSpin(string title) { SetMenu(spinMenu); if (spinTitle != null) spinTitle.text = title; spinManager?.Open(title); }
     public void OpenSpin(int spinIndex) { SetMenu(spinMenu); spinManager?.OpenSpin(spinIndex); }
     public void OpenSettings() => SetMenu(settingsMenu);
+    public void HideAllMenus() => SetMenu(null);
     static void Bind(Button button, UnityEngine.Events.UnityAction action) { if (button != null) button.onClick.AddListener(action); }
     void SetMenu(GameObject menu)
     {
@@ -135,7 +136,8 @@ public class MainMenu : MonoBehaviour
         {
             RoomManager.Instance.SetStatus("Leave your current room before finding another match."); rooms?.Open(); return;
         }
-        rooms?.FindOnlineMode(gameModes[index].sceneName);
+        if (rooms != null) rooms.FindOnlineMode(gameModes[index].sceneName);
+        else RoomManager.Instance?.SetStatus("Matchmaking menu is not ready yet.");
     }
     void Update()
     {
