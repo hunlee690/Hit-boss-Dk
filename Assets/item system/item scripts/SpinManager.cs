@@ -237,7 +237,7 @@ namespace HitBoss.Items
             go.layer = wheel.gameObject.layer; go.transform.SetParent(wheel, false);
             var label = go.AddComponent<TextMeshProUGUI>();
             label.font = wheelText != null ? wheelText.font : null; label.fontSize = 13; label.alignment = TextAlignmentOptions.Center;
-            label.color = Color.white; label.enableWordWrapping = true; label.raycastTarget = false;
+            label.color = Color.white; label.textWrappingMode = TextWrappingModes.Normal; label.raycastTarget = false;
             return label;
         }
 

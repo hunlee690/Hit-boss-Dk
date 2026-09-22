@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HitBoss.Multiplayer.MultiplayerMode
   modeId: mode-1
   displayName: co-op mode
-  sceneName: co-op
+  sceneName: co-op game2
   maxPlayers: 5
   minPlayers: 2
   skating: 0

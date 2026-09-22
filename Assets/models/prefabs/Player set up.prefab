@@ -434,9 +434,11 @@ GameObject:
   - component: {fileID: 5015250108636548222}
   - component: {fileID: 1671603265209525689}
   - component: {fileID: 6681526820179674246}
+  - component: {fileID: 2888274415509910917}
+  - component: {fileID: 6753488878459428551}
+  - component: {fileID: 7625904840146491186}
   - component: {fileID: 3399360970936691487}
   - component: {fileID: 5541858659452132318}
-  - component: {fileID: 6391393006357704521}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -570,6 +572,70 @@ MonoBehaviour:
   kills: 0
   deaths: 0
   visualRoot: {fileID: 0}
+--- !u!114 &2888274415509910917
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 837874775807645504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c8045d040834ab4d97900bac3540b24, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatStats
+  maxHealth: 3
+  maxStamina: 3
+--- !u!114 &6753488878459428551
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 837874775807645504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7821a81ba999ea64099a46b4480a4623, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatController
+  stats: {fileID: 2888274415509910917}
+  playerController: {fileID: 1671603265209525689}
+  slideStaminaCost: 2
+  slideDamage: 1
+  slideRagdollTime: 2
+  slideForce: 2.5
+  slideUpwardForce: 0.2
+  punchStaminaCost: 3
+  punchDamage: 3
+  punchRagdollTime: 1.25
+  punchForce: 4.5
+  punchUpwardForce: 0.5
+--- !u!114 &7625904840146491186
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 837874775807645504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fb1945197d1f3e429b1dc8bb9d36a45, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ThrowableInventory
+  playerController: {fileID: 1671603265209525689}
+  ownerStats: {fileID: 2888274415509910917}
+  bombPrefab: {fileID: 6322852915340389648, guid: 818b76f248b020546ba60ed43ea59dd2, type: 3}
+  minePrefab: {fileID: 6322852915340389648, guid: ade88653542f6824387798a7da345c09, type: 3}
+  throwPoint: {fileID: 8995875451892025098}
+  throwDirectionSource: {fileID: 5326144906264281960}
+  bombForwardSpeed: 12
+  bombUpwardSpeed: 4
+  minesPerPickup: 3
+  minePlaceDistance: 1
+  mineRayHeight: 2
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!114 &3399360970936691487
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -617,37 +683,6 @@ MonoBehaviour:
   visualModel: {fileID: 7860914450951781309}
   visualYawOffset: 180
   runAnimationSpeed: 1
---- !u!114 &6391393006357704521
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 837874775807645504}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1cb6643da026a674eb927659b29be42f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HitBoss.Multiplayer.Skate.SkatePlayerSettings
-  maxHealth: 3
-  maxStamina: 3
-  slideStaminaCost: 2
-  slideDamage: 1
-  punchStaminaCost: 3
-  punchDamage: 3
-  slideRagdollTime: 2
-  slideForce: 2.5
-  slideUpwardForce: 0.2
-  punchRagdollTime: 1.25
-  punchForce: 4.5
-  punchUpwardForce: 0.5
-  throwPoint: {fileID: 8995875451892025098}
-  bombForwardSpeed: 12
-  bombUpwardSpeed: 4
-  minePlaceDistance: 1
-  groundLayers:
-    serializedVersion: 2
-    m_Bits: 0
 --- !u!1 &949138785799318529
 GameObject:
   m_ObjectHideFlags: 0
@@ -1494,6 +1529,7 @@ Transform:
   - {fileID: 8224738826737073904}
   - {fileID: 3020328118500148544}
   - {fileID: 22097812625743858}
+  - {fileID: 3662525862322580821}
   - {fileID: 5102531331958419716}
   - {fileID: 8672539547213805273}
   - {fileID: 8745527842681564719}
@@ -1537,7 +1573,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51f9ba418f0d1d94d8e371dc706f6489, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatHitDetector
-  combatController: {fileID: 0}
+  combatController: {fileID: 6753488878459428551}
   punchHitPoint: {fileID: 5746987259072218653}
   slideHitPoint: {fileID: 6308043684885083975}
   punchRadius: 0.8
@@ -3076,6 +3112,133 @@ Transform:
   m_Children: []
   m_Father: {fileID: 9035135166474336006}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6920453447751359553
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3662525862322580821}
+  - component: {fileID: 6867906923340906889}
+  m_Layer: 0
+  m_Name: body (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &3662525862322580821
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6920453447751359553}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7860914450951781309}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!137 &6867906923340906889
+SkinnedMeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6920453447751359553}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 3
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: -876546973899608171, guid: af3711a9761b438488cd7329fbcce235, type: 3}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  serializedVersion: 2
+  m_Quality: 0
+  m_UpdateWhenOffscreen: 0
+  m_SkinnedMotionVectors: 1
+  m_Mesh: {fileID: 2136982261520300157, guid: 068def6d71fcb854fb125bf8c819c5fe, type: 3}
+  m_Bones:
+  - {fileID: 8546437846032972735}
+  - {fileID: 4969561905334650651}
+  - {fileID: 8524076005625670496}
+  - {fileID: 7429930769159050424}
+  - {fileID: 6876283558315111863}
+  - {fileID: 5026907716777111196}
+  - {fileID: 1158910795738285098}
+  - {fileID: 8883699216764456580}
+  - {fileID: 4509878491093408173}
+  - {fileID: 7999113160219876633}
+  - {fileID: 45529349317618535}
+  - {fileID: 9112048059604702868}
+  - {fileID: 3038141067050759379}
+  - {fileID: 4075333506679258863}
+  - {fileID: 1157951158533533914}
+  - {fileID: 8057184859050250672}
+  - {fileID: 5858109984983598811}
+  - {fileID: 5622654248734200378}
+  - {fileID: 8550024585849910179}
+  - {fileID: 3959629659137614159}
+  - {fileID: 3426199844026214397}
+  - {fileID: 3885662404863245713}
+  - {fileID: 6870393138112253453}
+  - {fileID: 6020778366811963540}
+  - {fileID: 4913658279027163545}
+  - {fileID: 7867960829590701574}
+  - {fileID: 612090057055400394}
+  - {fileID: 3623750190991366587}
+  - {fileID: 9035135166474336006}
+  - {fileID: 3025004574379269302}
+  - {fileID: 1756012007445286732}
+  - {fileID: 3518236116425806562}
+  - {fileID: 4023815544027426319}
+  - {fileID: 5951543774563630733}
+  - {fileID: 9087886989923473737}
+  m_BlendShapeWeights: []
+  m_RootBone: {fileID: 6870393138112253453}
+  m_AABB:
+    m_Center: {x: -0.0009825655, y: -0.0026489832, z: -0.0032094014}
+    m_Extent: {x: 0.0037296438, y: 0.009663952, z: 0.008171866}
+  m_DirtyAABB: 0
 --- !u!1 &7026334414485353509
 GameObject:
   m_ObjectHideFlags: 0

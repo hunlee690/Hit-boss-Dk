@@ -142,7 +142,7 @@ namespace HitBoss.Social
         async void Visit(string id)
         {
             int request = ++visitVersion; viewedId = id;
-            profileWindow.SetActive(true); profileTitle.text = "Loading profile…"; profileStats.text = ""; profileNote.text = "";
+            profileWindow.SetActive(true); profileTitle.text = "Loading profile..."; profileStats.text = ""; profileNote.text = "";
             renameInput.gameObject.SetActive(false); renameButton.gameObject.SetActive(false); profileFriendButton.gameObject.SetActive(false);
             try
             {

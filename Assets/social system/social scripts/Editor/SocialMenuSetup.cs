@@ -23,7 +23,7 @@ namespace HitBoss.Social.Editor
         static Image Background(RectTransform rt, Color color) { var image = rt.gameObject.AddComponent<Image>(); image.color = color; return image; }
         static TMP_Text Label(Transform parent, string name, string value, float x, float y, float w, float h, float size = 16)
         {
-            var rt = Rect(name, parent, x, y, w, h); var text = rt.gameObject.AddComponent<TextMeshProUGUI>(); text.font = font; text.text = value; text.fontSize = size; text.color = Color.white; text.raycastTarget = false; text.richText = false; text.overflowMode = TextOverflowModes.Ellipsis; return text;
+            var rt = Rect(name, parent, x, y, w, h); var text = rt.gameObject.AddComponent<TextMeshProUGUI>(); text.font = font; text.text = value; text.fontSize = size; text.color = Color.white; text.raycastTarget = false; text.richText = false; text.overflowMode = TextOverflowModes.Truncate; return text;
         }
         static Button Button(Transform parent, string name, string value, float x, float y, float w, float h)
         {
@@ -79,7 +79,7 @@ namespace HitBoss.Social.Editor
             view.requestsLabel = view.requestsButton.GetComponentInChildren<TMP_Text>();
             view.sentButton = Button(social, "Sent tab", "Sent", 215, 102, 83, 34);
             view.emptyText = Label(social, "Empty list", "Your friends will appear here.\nSearch a username to get started.", 24, 167, 262, 90, 15); view.emptyText.alignment = TextAlignmentOptions.Center;
-            view.statusText = Label(social, "Connection status", "Connecting…", 16, 305, 278, 36, 12); view.statusText.color = new Color(.65f,.74f,.8f);
+            view.statusText = Label(social, "Connection status", "Connecting...", 16, 305, 278, 36, 12); view.statusText.color = new Color(.65f,.74f,.8f);
 
             var row = Rect("Social player row", null, 0,0,286,86);
             Background(row, ButtonColor); row.gameObject.AddComponent<LayoutElement>().preferredHeight = 86;

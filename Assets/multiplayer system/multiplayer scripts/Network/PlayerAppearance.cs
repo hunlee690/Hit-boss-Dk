@@ -14,6 +14,23 @@ namespace HitBoss.Multiplayer
             movement.SetCustomizationSkatePreview(null, false);
             movement.SetEquippedSkate(selected);
         }
+        public NetworkLoadout RandomLoadout()
+        {
+            return new NetworkLoadout
+            {
+                initialized = true,
+                head = RandomIndex(head),
+                body = RandomIndex(body),
+                bag = RandomIndex(bag),
+                skates = RandomIndex(skates)
+            };
+        }
+        static int RandomIndex(PlayerCustomizationManager.CategoryData category)
+        {
+            return category?.items != null && category.items.Length > 0
+                ? Random.Range(0, category.items.Length)
+                : -1;
+        }
         static GameObject[] ApplyCategory(PlayerCustomizationManager.CategoryData category, int index)
         {
             if (category?.items == null) return null;

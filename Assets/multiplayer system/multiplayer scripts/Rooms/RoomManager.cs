@@ -80,7 +80,7 @@ namespace HitBoss.Multiplayer
             RequireAccount(); if (Room != null) throw new InvalidOperationException("Leave your current room first.");
             if (index < 0 || index >= modes.Length) throw new ArgumentException("Select a mode.");
             modes[index].ValidateConfiguration();
-            SetStatus("Creating private room…");
+            SetStatus("Creating private room...");
             Attach(await service.CreateAsync(modes[index], OnlineManager.Instance.Profiles.Current.username));
             SetStatus("Room created. Invite friends or share the code.");
         });
@@ -90,7 +90,7 @@ namespace HitBoss.Multiplayer
             if (Room != null) throw new InvalidOperationException("Leave your current room first.");
             if (index < 0 || index >= modes.Length) throw new ArgumentException("Select a mode.");
             var mode = modes[index]; mode.ValidateConfiguration();
-            SetStatus("Looking for players in this mode…");
+            SetStatus("Looking for players in this mode...");
             var name = OnlineManager.Instance.Profiles.Current.username;
             var found = await service.FindPublicAsync(mode, name);
             if (found == null)
@@ -100,7 +100,7 @@ namespace HitBoss.Multiplayer
             }
             Attach(found ?? await service.CreateAsync(mode, name, true));
             if (!IsHost) await UnityRoomService.SetReadyAsync(Room, true);
-            SetStatus(IsHost ? "Looking for players for 15 seconds. Empty places will use bots." : "Joined online match. Waiting for the host…");
+            SetStatus(IsHost ? "Looking for players for 15 seconds. Empty places will use bots." : "Joined online match. Waiting for the host...");
         });
         public Task ToggleBotsAsync() => RunAsync(async () =>
         {
@@ -112,13 +112,13 @@ namespace HitBoss.Multiplayer
         public Task JoinAsync(string code) => RunAsync(async () =>
         {
             RequireAccount(); if (Room != null) throw new InvalidOperationException("Leave your current room before joining another.");
-            SetStatus("Joining room…");
+            SetStatus("Joining room...");
             var joined = await service.JoinAsync(code, OnlineManager.Instance.Profiles.Current.username);
             if (UnityRoomService.Property(joined, "version") != UnityRoomService.Version || !modes.Any(m => m != null && m.modeId == UnityRoomService.Property(joined, "mode")) || joined.IsLocked || UnityRoomService.Property(joined, "phase") != "room")
             { await joined.LeaveAsync(); throw new InvalidOperationException("This room has started or uses a different game version."); }
             Attach(joined);
             if (PublicMatch) await UnityRoomService.SetReadyAsync(Room, true);
-            SetStatus(PublicMatch ? "Joined online match. Waiting for the host…" : "Joined. Press Ready when you are ready to play.");
+            SetStatus(PublicMatch ? "Joined online match. Waiting for the host..." : "Joined. Press Ready when you are ready to play.");
         });
         void Attach(ISession room)
         {
@@ -179,7 +179,7 @@ namespace HitBoss.Multiplayer
                 await UnityRoomService.RetryAsync(() => host.RefreshAsync()); cancellation.ThrowIfCancellationRequested();
                 if (host.PlayerCount + BotCount < selected.minPlayers || host.PlayerCount > selected.maxPlayers || !host.Players.All(p => UnityRoomService.IsReady(host, p)))
                     throw new InvalidOperationException("The player list or ready state changed. Ready up and try again.");
-                SetStatus("Connecting players…");
+                SetStatus("Connecting players...");
                 await host.Network.StartRelayNetworkAsync(new RelayNetworkOptions()); cancellation.ThrowIfCancellationRequested();
                 await connection.WaitForPlayersAsync(host.PlayerCount, cancellation);
                 host.SetProperty("phase", new SessionProperty("playing", VisibilityPropertyOptions.Member));

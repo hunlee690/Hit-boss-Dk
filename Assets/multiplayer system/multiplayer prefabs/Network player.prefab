@@ -1498,17 +1498,20 @@ MonoBehaviour:
   head:
     allowNone: 1
     items:
-    - itemName: 
+    - itemId: head.item-1
+      itemName: 
       icon: {fileID: 0}
       equippedByDefault: 0
       objectsToEnable:
       - {fileID: 1033449125086209502}
-    - itemName: glasses
+    - itemId: head.glasses
+      itemName: glasses
       icon: {fileID: 0}
       equippedByDefault: 0
       objectsToEnable:
       - {fileID: 4102351063382539221}
-    - itemName: helmet
+    - itemId: head.helmet
+      itemName: helmet
       icon: {fileID: 0}
       equippedByDefault: 0
       objectsToEnable:
@@ -1516,15 +1519,23 @@ MonoBehaviour:
   body:
     allowNone: 1
     items:
-    - itemName: def
+    - itemId: body.def
+      itemName: def
       icon: {fileID: 0}
       equippedByDefault: 1
       objectsToEnable:
       - {fileID: 6075989007257654355}
+    - itemId: body.1
+      itemName: body 1
+      icon: {fileID: 0}
+      equippedByDefault: 0
+      objectsToEnable:
+      - {fileID: 7974903347229310294}
   bag:
     allowNone: 1
     items:
-    - itemName: bag
+    - itemId: bag.bag
+      itemName: bag
       icon: {fileID: 0}
       equippedByDefault: 0
       objectsToEnable:
@@ -1532,7 +1543,8 @@ MonoBehaviour:
   skates:
     allowNone: 1
     items:
-    - itemName: skate 1
+    - itemId: skates.skate-1
+      itemName: skate 1
       icon: {fileID: 0}
       equippedByDefault: 1
       objectsToEnable:
@@ -1693,10 +1705,12 @@ GameObject:
   - component: {fileID: 5036637998405760351}
   - component: {fileID: 5674868521609799909}
   - component: {fileID: 7009891744376421725}
+  - component: {fileID: 1013219027378598514}
+  - component: {fileID: 7990014476403455553}
+  - component: {fileID: 3123181482987757816}
   - component: {fileID: 1284531314580901289}
   - component: {fileID: 5881560308184974043}
   - component: {fileID: 3686961045493525696}
-  - component: {fileID: 7128597012142023713}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1830,6 +1844,70 @@ MonoBehaviour:
   kills: 0
   deaths: 0
   visualRoot: {fileID: 0}
+--- !u!114 &1013219027378598514
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3399289482480405679}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c8045d040834ab4d97900bac3540b24, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatStats
+  maxHealth: 3
+  maxStamina: 3
+--- !u!114 &7990014476403455553
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3399289482480405679}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7821a81ba999ea64099a46b4480a4623, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatController
+  stats: {fileID: 1013219027378598514}
+  playerController: {fileID: 5674868521609799909}
+  slideStaminaCost: 2
+  slideDamage: 1
+  slideRagdollTime: 2
+  slideForce: 2.5
+  slideUpwardForce: 0.2
+  punchStaminaCost: 3
+  punchDamage: 3
+  punchRagdollTime: 1.25
+  punchForce: 4.5
+  punchUpwardForce: 0.5
+--- !u!114 &3123181482987757816
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3399289482480405679}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fb1945197d1f3e429b1dc8bb9d36a45, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ThrowableInventory
+  playerController: {fileID: 5674868521609799909}
+  ownerStats: {fileID: 1013219027378598514}
+  bombPrefab: {fileID: 6322852915340389648, guid: 818b76f248b020546ba60ed43ea59dd2, type: 3}
+  minePrefab: {fileID: 6322852915340389648, guid: ade88653542f6824387798a7da345c09, type: 3}
+  throwPoint: {fileID: 1114749276601652738}
+  throwDirectionSource: {fileID: 7247696163974133366}
+  bombForwardSpeed: 12
+  bombUpwardSpeed: 4
+  minesPerPickup: 3
+  minePlaceDistance: 1
+  mineRayHeight: 2
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!114 &1284531314580901289
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1923,37 +2001,6 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
---- !u!114 &7128597012142023713
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3399289482480405679}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1cb6643da026a674eb927659b29be42f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HitBoss.Multiplayer.Skate.SkatePlayerSettings
-  maxHealth: 3
-  maxStamina: 3
-  slideStaminaCost: 2
-  slideDamage: 1
-  punchStaminaCost: 3
-  punchDamage: 3
-  slideRagdollTime: 2
-  slideForce: 2.5
-  slideUpwardForce: 0.2
-  punchRagdollTime: 1.25
-  punchForce: 4.5
-  punchUpwardForce: 0.5
-  throwPoint: {fileID: 1114749276601652738}
-  bombForwardSpeed: 12
-  bombUpwardSpeed: 4
-  minePlaceDistance: 1
-  groundLayers:
-    serializedVersion: 2
-    m_Bits: 0
 --- !u!1 &3469225476297683797
 GameObject:
   m_ObjectHideFlags: 0
@@ -3387,6 +3434,133 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2150975689214762642}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7974903347229310294
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3727030748764845939}
+  - component: {fileID: 3265894723920139907}
+  m_Layer: 0
+  m_Name: body (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &3727030748764845939
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7974903347229310294}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1375139801278413523}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!137 &3265894723920139907
+SkinnedMeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7974903347229310294}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 3
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: -876546973899608171, guid: af3711a9761b438488cd7329fbcce235, type: 3}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  serializedVersion: 2
+  m_Quality: 0
+  m_UpdateWhenOffscreen: 0
+  m_SkinnedMotionVectors: 1
+  m_Mesh: {fileID: 2136982261520300157, guid: 068def6d71fcb854fb125bf8c819c5fe, type: 3}
+  m_Bones:
+  - {fileID: 2151053867924526199}
+  - {fileID: 1100996279981153439}
+  - {fileID: 2305606514328186548}
+  - {fileID: 9104349026282728326}
+  - {fileID: 2343808936596040454}
+  - {fileID: 7823532449861870180}
+  - {fileID: 8954263336608814079}
+  - {fileID: 2614010252263748248}
+  - {fileID: 3411071512349819698}
+  - {fileID: 5554449115116373144}
+  - {fileID: 5469991553168797436}
+  - {fileID: 9066183303297853541}
+  - {fileID: 298266738994384549}
+  - {fileID: 3974590116038021477}
+  - {fileID: 516425633701473625}
+  - {fileID: 8884728463073495843}
+  - {fileID: 7584816547079474666}
+  - {fileID: 6681169433520970835}
+  - {fileID: 2150975689214762642}
+  - {fileID: 6006122983153287039}
+  - {fileID: 2455042843236958607}
+  - {fileID: 8622171195364532486}
+  - {fileID: 1022365951584219621}
+  - {fileID: 3746335072376137067}
+  - {fileID: 1400306549110552088}
+  - {fileID: 3724690064188301945}
+  - {fileID: 2506182765557375573}
+  - {fileID: 6163358274947561244}
+  - {fileID: 7957360677749554662}
+  - {fileID: 1016355861526519025}
+  - {fileID: 2041086946789763500}
+  - {fileID: 2016250813580257780}
+  - {fileID: 5366611973945962185}
+  - {fileID: 2245376013575149276}
+  - {fileID: 1353919943069286704}
+  m_BlendShapeWeights: []
+  m_RootBone: {fileID: 1022365951584219621}
+  m_AABB:
+    m_Center: {x: -0.0009825655, y: -0.0026489832, z: -0.0032094014}
+    m_Extent: {x: 0.0037296438, y: 0.009663952, z: 0.008171866}
+  m_DirtyAABB: 0
 --- !u!1 &8327921954478951831
 GameObject:
   m_ObjectHideFlags: 0
@@ -3430,6 +3604,7 @@ Transform:
   - {fileID: 1562109385062547707}
   - {fileID: 710402205275250706}
   - {fileID: 1114749276601652738}
+  - {fileID: 3727030748764845939}
   m_Father: {fileID: 7247696163974133366}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &7890507593243985739
@@ -3466,7 +3641,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51f9ba418f0d1d94d8e371dc706f6489, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatHitDetector
-  combatController: {fileID: 0}
+  combatController: {fileID: 7990014476403455553}
   punchHitPoint: {fileID: 1562109385062547707}
   slideHitPoint: {fileID: 710402205275250706}
   punchRadius: 0.8

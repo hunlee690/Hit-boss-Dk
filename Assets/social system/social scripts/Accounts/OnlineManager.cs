@@ -18,7 +18,7 @@ namespace HitBoss.Social
         public IAccountService Account { get; private set; }
         public bool Busy { get; private set; }
         public bool Ready => Profiles?.Current != null;
-        public string Status { get; private set; } = "Connecting…";
+        public string Status { get; private set; } = "Connecting...";
         public event Action Changed;
         float nextSave;
         bool saving;
@@ -34,7 +34,7 @@ namespace HitBoss.Social
         public async Task ConnectAsync()
         {
             if (Busy) return;
-            Busy = true; SetStatus("Signing in…");
+            Busy = true; SetStatus("Signing in...");
             try
             {
                 if (string.IsNullOrWhiteSpace(Application.cloudProjectId))
@@ -46,14 +46,14 @@ namespace HitBoss.Social
                     Profiles = new ProfileManager(Account, new UnityProfileService(), Application.cloudProjectId + "." + environment);
                     Profiles.Changed += ProfileChanged;
                 }
-                SetStatus("Loading profile…");
+                SetStatus("Loading profile...");
                 await Profiles.InitializeAsync();
                 if (Friends == null)
                 {
                     Friends = new FriendsManager(new UnityFriendsProvider(), Account.PlayerId);
                     Friends.Changed += Notify;
                 }
-                SetStatus("Connecting friends…");
+                SetStatus("Connecting friends...");
                 await Friends.InitializeAsync();
                 SetStatus("Online");
             }
@@ -69,6 +69,8 @@ namespace HitBoss.Social
             foreach (var p in FindObjectsByType<MatchParticipant>(FindObjectsSortMode.None))
                 if (!p.isAI && p.GetComponentInParent<HitBoss.Multiplayer.NetworkPlayer>() == null) { p.playerName = Profiles.Current.username; p.RefreshName(); }
         }
+        public void RecordKill() { if (Ready) Profiles.RecordProgress(1, 0, xpPerKill); }
+        public void RecordDeath() { if (Ready) Profiles.RecordProgress(0, 1, 0); }
         void Update() { if (Time.unscaledTime >= nextSave) { nextSave = Time.unscaledTime + saveInterval; Flush(); } }
         public async void Flush()
         {

@@ -8,7 +8,7 @@ namespace HitBoss.Multiplayer
         Vector3 fallback;
         void Awake()
         {
-            var legacy = FindFirstObjectByType<HitBoss.Multiplayer.Skate.SkateArena>();
+            var legacy = FindFirstObjectByType<GameModeManager>();
             spawnPoints = legacy != null ? legacy.spawnPoints : null;
             // Prefer authored spawn points. Otherwise use the existing scene player position.
             var existing = FindFirstObjectByType<PlayerController>();

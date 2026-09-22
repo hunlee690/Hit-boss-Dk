@@ -23,6 +23,12 @@ namespace HitBoss.Items.Editor
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
+            var manager = (ShopManager)target;
+            if (manager.SyncOffersFromCustomization())
+            {
+                EditorUtility.SetDirty(manager);
+                serializedObject.Update();
+            }
             EditorGUILayout.PropertyField(customization);
             EditorGUILayout.PropertyField(content);
             EditorGUILayout.PropertyField(rowPrefab);
@@ -33,8 +39,7 @@ namespace HitBoss.Items.Editor
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Items For Sale", EditorStyles.boldLabel);
 
-            var manager = (ShopManager)target;
-            var labels = new List<string> { "Choose item…" };
+            var labels = new List<string> { "Choose item..." };
             var ids = new List<string> { "" };
             Add(manager.customization, PlayerCustomizationManager.Category.Head, manager.customization?.headAccessories, labels, ids);
             Add(manager.customization, PlayerCustomizationManager.Category.Body, manager.customization?.body, labels, ids);

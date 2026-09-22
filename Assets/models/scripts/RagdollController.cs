@@ -40,8 +40,15 @@ public class RagdollController : MonoBehaviour
     Rigidbody hipsRigidbody;
 
     PlayerController playerController;
+    SimpleAIPlayerBehaviour aiBehaviour;
+    CombatController combatController;
+    ThrowableInventory throwableInventory;
+    CombatStats stats;
 
     bool playerWasEnabled;
+    bool aiWasEnabled;
+    bool combatWasEnabled;
+    bool throwableWasEnabled;
 
     bool ragdolled;
     bool permanentRagdoll;
@@ -82,6 +89,18 @@ public class RagdollController : MonoBehaviour
 
         playerController =
             GetComponent<PlayerController>();
+
+        aiBehaviour =
+            GetComponent<SimpleAIPlayerBehaviour>();
+
+        combatController =
+            GetComponent<CombatController>();
+
+        throwableInventory =
+            GetComponent<ThrowableInventory>();
+
+        stats =
+            GetComponent<CombatStats>();
 
 
         ragdollBodies =
@@ -158,7 +177,7 @@ public class RagdollController : MonoBehaviour
 
 
         // Death ragdoll stays physical until
-        // The online host prepares the respawn.
+        // GameModeManager prepares the respawn.
         if (!permanentRagdoll)
         {
             recoverRoutine =
@@ -620,6 +639,27 @@ public class RagdollController : MonoBehaviour
             playerWasEnabled =
                 playerController.enabled;
         }
+
+
+        if (aiBehaviour != null)
+        {
+            aiWasEnabled =
+                aiBehaviour.enabled;
+        }
+
+
+        if (combatController != null)
+        {
+            combatWasEnabled =
+                combatController.enabled;
+        }
+
+
+        if (throwableInventory != null)
+        {
+            throwableWasEnabled =
+                throwableInventory.enabled;
+        }
     }
 
 
@@ -632,13 +672,34 @@ public class RagdollController : MonoBehaviour
             playerController.enabled =
                 false;
         }
+
+
+        if (aiBehaviour != null)
+        {
+            aiBehaviour.enabled =
+                false;
+        }
+
+
+        if (combatController != null)
+        {
+            combatController.enabled =
+                false;
+        }
+
+
+        if (throwableInventory != null)
+        {
+            throwableInventory.enabled =
+                false;
+        }
     }
 
 
     void RestoreControlStates()
     {
-        var combat = GetComponentInParent<HitBoss.Multiplayer.Skate.SkateCombat>();
-        if (combat != null && combat.Active && !combat.CanAct)
+        if (stats != null &&
+            stats.IsDead)
         {
             return;
         }
@@ -648,6 +709,27 @@ public class RagdollController : MonoBehaviour
         {
             playerController.enabled =
                 playerWasEnabled;
+        }
+
+
+        if (aiBehaviour != null)
+        {
+            aiBehaviour.enabled =
+                aiWasEnabled;
+        }
+
+
+        if (combatController != null)
+        {
+            combatController.enabled =
+                combatWasEnabled;
+        }
+
+
+        if (throwableInventory != null)
+        {
+            throwableInventory.enabled =
+                throwableWasEnabled;
         }
     }
 
@@ -807,4 +889,3 @@ public class RagdollController : MonoBehaviour
         }
     }
 }
-

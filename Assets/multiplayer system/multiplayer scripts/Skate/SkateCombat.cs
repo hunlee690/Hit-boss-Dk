@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using HitBoss.Social;
-using HitBoss.Currency;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -28,8 +27,8 @@ namespace HitBoss.Multiplayer.Skate
         public Vector3 Position => Player.movement.transform.position;
         public int MaxHealth => stats.maxHealth;
         public int MaxStamina => stats.maxStamina;
-        SkatePlayerSettings stats;
-        SkatePlayerSettings tuning;
+        CombatStats stats;
+        CombatController tuning;
         RagdollController ragdoll;
         Rigidbody body;
         double nextAttack, recoverAt, nextStamina, invulnerableUntil;
@@ -44,8 +43,8 @@ namespace HitBoss.Multiplayer.Skate
             Player = GetComponent<NetworkPlayer>();
             Active = MatchConnection.Instance?.ActiveRules is SkateMatchRules;
             if (!Active) { enabled = false; return; }
-            stats = Player.movement.GetComponent<SkatePlayerSettings>();
-            tuning = stats;
+            stats = Player.movement.GetComponent<CombatStats>();
+            tuning = Player.movement.GetComponent<CombatController>();
             ragdoll = Player.movement.GetComponent<RagdollController>();
             body = Player.movement.GetComponent<Rigidbody>();
             Players.Add(this);
@@ -63,12 +62,7 @@ namespace HitBoss.Multiplayer.Skate
         void KillsChanged(int oldValue, int value)
         {
             Player.participant.kills = value;
-            if (IsOwner && !Player.IsBot.Value && value > oldValue)
-            {
-                int gained = value - oldValue;
-                OnlineManager.Instance?.Profiles?.RecordProgress(gained, 0, gained * (OnlineManager.Instance?.xpPerKill ?? 25));
-                CurrencyManager.Instance?.AwardKillCoins(gained);
-            }
+            if (IsOwner && !Player.IsBot.Value && value > oldValue) OnlineManager.Instance?.Profiles?.RecordProgress(value - oldValue, 0, (value - oldValue) * (OnlineManager.Instance?.xpPerKill ?? 25));
         }
         void DeathsChanged(int oldValue, int value)
         {

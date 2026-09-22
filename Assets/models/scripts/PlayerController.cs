@@ -153,6 +153,8 @@ public class PlayerController : MonoBehaviour
     int attackLayer;
 
     Coroutine attackRoutine;
+    CombatController combatController;
+    ThrowableInventory throwableInventory;
 
     // =========================================================
     // CUSTOMIZATION SKATES
@@ -192,6 +194,12 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         playerCollider = GetComponent<Collider>();
+
+        combatController =
+        GetComponent<CombatController>();
+
+        throwableInventory =
+        GetComponent<ThrowableInventory>();
 
 
         if (rb != null)
@@ -329,6 +337,9 @@ public class PlayerController : MonoBehaviour
                 ReadNormalInput();
         }
 
+
+        ReadMouse();
+
         UpdateAnimator();
     }
 
@@ -363,6 +374,29 @@ public class PlayerController : MonoBehaviour
     // =========================================================
     // MOUSE ATTACKS
     // =========================================================
+
+    void ReadMouse()
+{
+    if (Mouse.current == null)
+        return;
+
+
+    // LEFT = SLIDE
+    if (Mouse.current.leftButton.wasPressedThisFrame && combatController != null && combatController.isActiveAndEnabled)
+        combatController?.TrySlide();
+
+
+    // RIGHT = PUNCH
+    if (Mouse.current.rightButton.wasPressedThisFrame && combatController != null && combatController.isActiveAndEnabled)
+        combatController?.TryPunch();
+
+
+    // MIDDLE = THROW
+    if (Mouse.current.middleButton.wasPressedThisFrame && throwableInventory != null && throwableInventory.isActiveAndEnabled)
+{
+    throwableInventory?.TryUseThrowable();
+}
+}
 
     // =========================================================
     // NORMAL INPUT
@@ -1341,4 +1375,3 @@ public class PlayerController : MonoBehaviour
         }
     }
 }
-

@@ -26,10 +26,21 @@ namespace HitBoss.Multiplayer
             bool allowed = IsOwner && !IsBot.Value && !paused && (combat == null || !combat.Active || combat.CanAct);
             movement.enabled = allowed && !mode.useCoopMovement;
             if (coopMovement != null) coopMovement.enabled = allowed && mode.useCoopMovement;
-            if (playerCamera != null) playerCamera.enabled = IsOwner && !IsBot.Value && !paused && !(combat != null && combat.Active && combat.Finished.Value);
+            if (playerCamera != null) playerCamera.enabled = IsOwner && !IsBot.Value && !paused;
         }
         MultiplayerMode mode;
         int pendingBotNumber;
+        static readonly string[] BotNames =
+        {
+            "Nova", "Blaze", "Ryder", "Echo", "Viper", "Luna", "Axel", "Jett",
+            "Pixel", "Storm", "Raven", "Bolt"
+        };
+        public static string BotName(int number)
+        {
+            int index = Mathf.Max(0, number - 1);
+            string name = BotNames[index % BotNames.Length];
+            return index < BotNames.Length ? name : name + " " + (index / BotNames.Length + 1);
+        }
         public void PrepareBot(int number) { pendingBotNumber = number; }
 
         void Awake()
@@ -48,13 +59,17 @@ namespace HitBoss.Multiplayer
             body.isKinematic = !local;
             foreach (var collider in GetComponentsInChildren<Collider>(true)) collider.enabled = false;
             if (local) movement.GetComponent<CapsuleCollider>().enabled = true;
+            // Local combat cannot be shared safely until a mode supplies authoritative combat rules.
+            foreach (var combat in GetComponentsInChildren<CombatController>(true)) combat.enabled = false;
+            foreach (var inventory in GetComponentsInChildren<ThrowableInventory>(true)) inventory.enabled = false;
         }
         public override void OnNetworkSpawn()
         {
             if (IsServer && pendingBotNumber > 0)
             {
                 IsBot.Value = true;
-                Username.Value = new FixedString128Bytes("Bot " + pendingBotNumber);
+                Username.Value = new FixedString128Bytes(BotName(pendingBotNumber));
+                if (appearance != null) Loadout.Value = appearance.RandomLoadout();
             }
             mode = RoomManager.Instance.Mode;
             SetLocalControl(IsOwner && !IsBot.Value);
@@ -67,7 +82,7 @@ namespace HitBoss.Multiplayer
             }
             if (MatchConnection.Instance.ActiveRules != null) MatchConnection.Instance.ActiveRules.ConfigurePlayer(this, mode);
             Loadout.OnValueChanged += LoadoutChanged;
-            if (IsOwner) Loadout.Value = MatchConnection.Instance.CurrentLoadout;
+            if (IsOwner && !IsBot.Value) Loadout.Value = MatchConnection.Instance.CurrentLoadout;
             LoadoutChanged(default, Loadout.Value);
             movement.SetSkateMode(mode.skating);
             if (IsOwner)
