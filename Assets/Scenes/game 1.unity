@@ -435,6 +435,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PauseMenu
   pausePanel: {fileID: 1241720530}
+  resultScreen: {fileID: 1341547092}
   resumeButton: {fileID: 1569070647}
   quitMatchButton: {fileID: 1734698535}
   playerTag: Player
