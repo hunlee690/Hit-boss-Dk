@@ -7,12 +7,15 @@ namespace HitBoss.Items.Editor
     [CustomEditor(typeof(ShopManager))]
     public sealed class ShopManagerEditor : UnityEditor.Editor
     {
-        SerializedProperty customization, content, rowPrefab, statusText, offers;
+        SerializedProperty customization, content, rowPrefab, spinCardPrefab, spinManager, mainMenu, statusText, offers;
         void OnEnable()
         {
             customization = serializedObject.FindProperty("customization");
             content = serializedObject.FindProperty("content");
             rowPrefab = serializedObject.FindProperty("rowPrefab");
+            spinCardPrefab = serializedObject.FindProperty("spinCardPrefab");
+            spinManager = serializedObject.FindProperty("spinManager");
+            mainMenu = serializedObject.FindProperty("mainMenu");
             statusText = serializedObject.FindProperty("statusText");
             offers = serializedObject.FindProperty("offers");
         }
@@ -23,6 +26,9 @@ namespace HitBoss.Items.Editor
             EditorGUILayout.PropertyField(customization);
             EditorGUILayout.PropertyField(content);
             EditorGUILayout.PropertyField(rowPrefab);
+            EditorGUILayout.PropertyField(spinCardPrefab);
+            EditorGUILayout.PropertyField(spinManager);
+            EditorGUILayout.PropertyField(mainMenu);
             EditorGUILayout.PropertyField(statusText);
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Items For Sale", EditorStyles.boldLabel);

@@ -118,10 +118,15 @@ namespace HitBoss.Social
         }
         public bool TryPurchaseItem(string itemId, int coinCost, int gemCost, out string message)
         {
+            return TrySpendAndGrant(itemId, 0, 0, coinCost, gemCost, out message);
+        }
+        public bool TrySpendAndGrant(string itemId, int rewardCoins, int rewardGems, int coinCost, int gemCost, out string message)
+        {
             message = "";
             if (saved == null || Current == null) { message = "Profile is still loading."; return false; }
-            if (string.IsNullOrWhiteSpace(itemId)) { message = "This item is not configured."; return false; }
-            if (OwnsItem(itemId)) { message = "Already owned."; return false; }
+            bool grantsItem = !string.IsNullOrWhiteSpace(itemId);
+            if (!grantsItem && rewardCoins <= 0 && rewardGems <= 0) { message = "This reward is not configured."; return false; }
+            if (grantsItem && OwnsItem(itemId)) { message = "Already owned."; return false; }
             coinCost = Math.Max(0, coinCost); gemCost = Math.Max(0, gemCost);
             if (Current.coins < coinCost) { message = "Not enough coins."; return false; }
             if (Current.gems < gemCost) { message = "Not enough gems."; return false; }
@@ -129,11 +134,13 @@ namespace HitBoss.Social
             {
                 coinCost = coinCost,
                 gemCost = gemCost,
-                grantItems = new List<string> { itemId }
+                coins = Math.Max(0, rewardCoins),
+                gems = Math.Max(0, rewardGems),
+                grantItems = grantsItem ? new List<string> { itemId } : new List<string>()
             });
             PersistPending();
             UpdateView();
-            message = "Purchased.";
+            message = "Reward claimed.";
             return true;
         }
         public bool SetEquippedItem(string category, string itemId)

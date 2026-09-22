@@ -107,6 +107,18 @@ namespace HitBoss.Items
             return purchased;
         }
 
+        public bool TrySpinReward(string itemId, int rewardCoins, int rewardGems, ShopCurrency currency, int cost, out string message)
+        {
+            var profiles = OnlineManager.Instance?.Profiles;
+            if (profiles == null) { message = "Profile is still loading."; return false; }
+            bool granted = profiles.TrySpendAndGrant(itemId, rewardCoins, rewardGems,
+                currency == ShopCurrency.Coins ? cost : 0,
+                currency == ShopCurrency.Gems ? cost : 0,
+                out message);
+            if (granted) OnlineManager.Instance.Flush();
+            return granted;
+        }
+
         public CatalogItem Find(string itemId) => catalog.FirstOrDefault(x => x.id == itemId);
 
         void BuildCatalog()

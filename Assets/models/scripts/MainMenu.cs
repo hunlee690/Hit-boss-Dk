@@ -80,6 +80,7 @@ public class MainMenu : MonoBehaviour
     public void OpenShop() { SetMenu(shopMenu); SelectShopSection(3); }
     public void OpenGamePass() => SetMenu(gamePassMenu);
     public void OpenSpin(string title) { SetMenu(spinMenu); if (spinTitle != null) spinTitle.text = title; spinManager?.Open(title); }
+    public void OpenSpin(int spinIndex) { SetMenu(spinMenu); spinManager?.OpenSpin(spinIndex); }
     public void OpenSettings() => SetMenu(settingsMenu);
     static void Bind(Button button, UnityEngine.Events.UnityAction action) { if (button != null) button.onClick.AddListener(action); }
     void SetMenu(GameObject menu)
@@ -95,8 +96,8 @@ public class MainMenu : MonoBehaviour
     }
     void SelectShopSection(int index)
     {
-        if (index == 0) { OpenSpin("GEM SPIN"); return; }
-        if (index == 1) { OpenSpin("COIN SPIN"); return; }
+        if (index == 0) { itemShop?.OpenSpins(ShopCurrency.Gems); return; }
+        if (index == 1) { itemShop?.OpenSpins(ShopCurrency.Coins); return; }
         if (index == 3) { itemShop?.Open(); return; }
         itemShop?.Hide();
         if (shopStatus != null) shopStatus.text = "CURRENCY SHOP\nComing later";

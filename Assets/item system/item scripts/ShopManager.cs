@@ -20,9 +20,14 @@ namespace HitBoss.Items
         public PlayerCustomizationManager customization;
         public Transform content;
         public ShopItemRow rowPrefab;
+        public ShopSpinCard spinCardPrefab;
+        public SpinManager spinManager;
+        public MainMenu mainMenu;
         public TMP_Text statusText;
         public List<ShopOffer> offers = new List<ShopOffer>();
         bool open;
+        bool showingSpins;
+        ShopCurrency spinCurrency;
 
         void OnEnable()
         {
@@ -38,6 +43,16 @@ namespace HitBoss.Items
         public void Open()
         {
             open = true;
+            showingSpins = false;
+            if (content != null) content.gameObject.SetActive(true);
+            Refresh();
+        }
+
+        public void OpenSpins(ShopCurrency currency)
+        {
+            open = true;
+            showingSpins = true;
+            spinCurrency = currency;
             if (content != null) content.gameObject.SetActive(true);
             Refresh();
         }
@@ -50,9 +65,17 @@ namespace HitBoss.Items
 
         public void Refresh()
         {
-            if (!open || content == null || rowPrefab == null) return;
+            if (!open || content == null) return;
             for (int i = content.childCount - 1; i >= 0; i--)
-                if (content.GetChild(i).gameObject != rowPrefab.gameObject) Destroy(content.GetChild(i).gameObject);
+            {
+                GameObject child = content.GetChild(i).gameObject;
+                if ((rowPrefab != null && child == rowPrefab.gameObject) || (spinCardPrefab != null && child == spinCardPrefab.gameObject)) continue;
+                child.SetActive(false);
+                Destroy(child);
+            }
+
+            if (showingSpins) { BuildSpinCards(); return; }
+            if (rowPrefab == null) return;
 
             var items = ItemManager.Instance;
             if (items == null || items.Catalog.Count == 0)
@@ -75,6 +98,30 @@ namespace HitBoss.Items
             }
             rowPrefab.gameObject.SetActive(false);
             SetStatus(visible == 0 ? "No items are on sale. Add offers in Shop Manager." : "ITEM SHOP");
+        }
+
+        void BuildSpinCards()
+        {
+            if (spinManager == null || spinCardPrefab == null) { SetStatus("No spins are configured."); return; }
+            int visible = 0;
+            for (int i = 0; i < spinManager.spins.Count; i++)
+            {
+                var definition = spinManager.spins[i];
+                if (definition == null || !definition.available || definition.currency != spinCurrency) continue;
+                var card = Instantiate(spinCardPrefab, content);
+                card.gameObject.SetActive(true);
+                card.name = "Spin - " + definition.spinName;
+                card.Setup(this, i, definition);
+                visible++;
+            }
+            spinCardPrefab.gameObject.SetActive(false);
+            if (rowPrefab != null) rowPrefab.gameObject.SetActive(false);
+            SetStatus(visible == 0 ? "No spins are available." : (spinCurrency == ShopCurrency.Coins ? "COIN SPINS" : "GEM SPINS"));
+        }
+
+        public void ChooseSpin(int spinIndex)
+        {
+            if (mainMenu != null) mainMenu.OpenSpin(spinIndex);
         }
 
         public void Buy(ShopOffer offer)
