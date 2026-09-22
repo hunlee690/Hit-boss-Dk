@@ -1413,6 +1413,7 @@ GameObject:
   - component: {fileID: 984107485197607423}
   - component: {fileID: 2582864889987157949}
   - component: {fileID: 3980063860456377843}
+  - component: {fileID: 2506703103833240029}
   m_Layer: 0
   m_Name: Network player
   m_TagString: Player
@@ -1550,6 +1551,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HitBoss.Multiplayer.Skate.SkateCombat
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &2506703103833240029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2596138052269426035}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec7f629fcafa3f64d820a7179c7b6587, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BRPlayerController
+  moveSpeed: 5
+  rotationSpeed: 12
+  jumpForce: 6
+  groundCheckDistance: 0.15
+  slideCooldown: 0.5
+  cameraTransform: {fileID: 988558385246031918}
+  animator: {fileID: 7890507593243985739}
+  brAnimatorController: {fileID: 9100000, guid: 6b72658984fe43144b6b0836ab5b4878, type: 2}
 --- !u!1 &2633227925161720342
 GameObject:
   m_ObjectHideFlags: 0
@@ -1699,6 +1720,7 @@ GameObject:
   - component: {fileID: 1284531314580901289}
   - component: {fileID: 5881560308184974043}
   - component: {fileID: 3686961045493525696}
+  - component: {fileID: 1042113383120987579}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1989,6 +2011,26 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &1042113383120987579
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3399289482480405679}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec7f629fcafa3f64d820a7179c7b6587, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BRPlayerController
+  moveSpeed: 5
+  rotationSpeed: 12
+  jumpForce: 6
+  groundCheckDistance: 1.05
+  slideCooldown: 0.5
+  cameraTransform: {fileID: 988558385246031918}
+  animator: {fileID: 7890507593243985739}
+  brAnimatorController: {fileID: 9100000, guid: 6b72658984fe43144b6b0836ab5b4878, type: 2}
 --- !u!1 &3469225476297683797
 GameObject:
   m_ObjectHideFlags: 0
