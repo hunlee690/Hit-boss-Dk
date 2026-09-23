@@ -12,8 +12,8 @@ EditorBuildSettings:
     path: Assets/Scenes/game 1.unity
     guid: 8d99458a2454dc440898c2afdb17f2cb
   - enabled: 1
-    path: Assets/Scenes/co-op game2.unity
-    guid: 7edba0c3c4e939c43b36dbb78e6ab99e
+    path: Assets/Scenes/co-op.unity
+    guid: 4b90d8fb64734d70bda4e2e166938d88
   - enabled: 1
     path: Assets/Scenes/Battel-royal.unity
     guid: 9a97955f47c7e7e4395e55a536485849

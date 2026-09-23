@@ -20,21 +20,6 @@ public class PauseMenu : MonoBehaviour
     float previousTimeScale = 1;
     public bool IsPaused => paused;
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    static void Install()
-    {
-        SceneManager.sceneLoaded -= EnsurePause;
-        SceneManager.sceneLoaded += EnsurePause;
-    }
-
-    static void EnsurePause(Scene scene, LoadSceneMode mode)
-    {
-        if (scene.name == "main menu") return;
-        var existing = FindFirstObjectByType<PauseMenu>();
-        if (existing != null) { existing.enabled = true; return; }
-        new GameObject("Pause menu").AddComponent<PauseMenu>();
-    }
-
     void Awake()
     {
         if (pausePanel == gameObject) { Debug.LogError("PausePanel cannot be the PauseMenu object."); return; }
@@ -153,12 +138,4 @@ public class PauseMenu : MonoBehaviour
         if (paused && onlinePlayer == null) Time.timeScale = previousTimeScale;
     }
 
-    void OnGUI()
-    {
-        if (!paused || pausePanel != null) return;
-        var box = new Rect(Screen.width / 2f - 150, Screen.height / 2f - 100, 300, 200);
-        GUI.Box(box, "Paused");
-        if (GUI.Button(new Rect(box.x + 30, box.y + 50, 240, 50), "Resume")) ResumeMatch();
-        if (GUI.Button(new Rect(box.x + 30, box.y + 115, 240, 50), "Leave match")) QuitMatch();
-    }
 }
