@@ -1,0 +1,123 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!319 &31900000
+AvatarMask:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: player throw
+  m_Mask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+  m_Elements:
+  - m_Path: 
+    m_Weight: 1
+  - m_Path: Armature
+    m_Weight: 1
+  - m_Path: Armature/hand.L
+    m_Weight: 1
+  - m_Path: Armature/hand.L/index.L
+    m_Weight: 1
+  - m_Path: Armature/hand.L/index.L/index.001.L
+    m_Weight: 1
+  - m_Path: Armature/hand.L/index.L/index.001.L/index.002.L
+    m_Weight: 1
+  - m_Path: Armature/hand.L/index.L/index.001.L/index.002.L/index.002.L_end
+    m_Weight: 1
+  - m_Path: Armature/hand.L/middle.L
+    m_Weight: 1
+  - m_Path: Armature/hand.L/middle.L/middle.001.L
+    m_Weight: 1
+  - m_Path: Armature/hand.L/middle.L/middle.001.L/middle.002.L
+    m_Weight: 1
+  - m_Path: Armature/hand.L/middle.L/middle.001.L/middle.002.L/middle.002.L_end
+    m_Weight: 1
+  - m_Path: Armature/hand.L/pinky.L
+    m_Weight: 1
+  - m_Path: Armature/hand.L/pinky.L/pinky.001.L
+    m_Weight: 1
+  - m_Path: Armature/hand.L/pinky.L/pinky.001.L/pinky.002.L
+    m_Weight: 1
+  - m_Path: Armature/hand.L/pinky.L/pinky.001.L/pinky.002.L/pinky.002.L_end
+    m_Weight: 1
+  - m_Path: Armature/hand.L/thumb.L
+    m_Weight: 1
+  - m_Path: Armature/hand.L/thumb.L/thumb.001.L
+    m_Weight: 1
+  - m_Path: Armature/hand.L/thumb.L/thumb.001.L/thumb.002.L
+    m_Weight: 1
+  - m_Path: Armature/hand.L/thumb.L/thumb.001.L/thumb.002.L/thumb.002.L_end
+    m_Weight: 1
+  - m_Path: Armature/hand.R
+    m_Weight: 0
+  - m_Path: Armature/hand.R/index.R
+    m_Weight: 0
+  - m_Path: Armature/hand.R/index.R/index.001.R
+    m_Weight: 0
+  - m_Path: Armature/hand.R/index.R/index.001.R/index.002.R
+    m_Weight: 0
+  - m_Path: Armature/hand.R/index.R/index.001.R/index.002.R/index.002.R_end
+    m_Weight: 0
+  - m_Path: Armature/hand.R/middle.R
+    m_Weight: 0
+  - m_Path: Armature/hand.R/middle.R/middle.001.R
+    m_Weight: 0
+  - m_Path: Armature/hand.R/middle.R/middle.001.R/middle.002.R
+    m_Weight: 0
+  - m_Path: Armature/hand.R/middle.R/middle.001.R/middle.002.R/middle.002.R_end
+    m_Weight: 0
+  - m_Path: Armature/hand.R/pinky.R
+    m_Weight: 0
+  - m_Path: Armature/hand.R/pinky.R/pinky.001.R
+    m_Weight: 0
+  - m_Path: Armature/hand.R/pinky.R/pinky.001.R/pinky.002.R
+    m_Weight: 0
+  - m_Path: Armature/hand.R/pinky.R/pinky.001.R/pinky.002.R/pinky.002.R_end
+    m_Weight: 0
+  - m_Path: Armature/hand.R/thumb.R
+    m_Weight: 0
+  - m_Path: Armature/hand.R/thumb.R/thumb.001.R
+    m_Weight: 0
+  - m_Path: Armature/hand.R/thumb.R/thumb.001.R/thumb.002.R
+    m_Weight: 0
+  - m_Path: Armature/hand.R/thumb.R/thumb.001.R/thumb.002.R/thumb.002.R_end
+    m_Weight: 0
+  - m_Path: Armature/shin.L.001
+    m_Weight: 0
+  - m_Path: Armature/shin.L.001/shin.L.001_end
+    m_Weight: 0
+  - m_Path: Armature/shin.R.001
+    m_Weight: 0
+  - m_Path: Armature/shin.R.001/shin.R.001_end
+    m_Weight: 0
+  - m_Path: Armature/spine
+    m_Weight: 0
+  - m_Path: Armature/spine/head
+    m_Weight: 0
+  - m_Path: Armature/spine/head/head_end
+    m_Weight: 0
+  - m_Path: Armature/spine/spine.001
+    m_Weight: 0
+  - m_Path: Armature/spine/spine.001/thigh.L
+    m_Weight: 0
+  - m_Path: Armature/spine/spine.001/thigh.L/shin.L
+    m_Weight: 0
+  - m_Path: Armature/spine/spine.001/thigh.L/shin.L/shin.L_end
+    m_Weight: 0
+  - m_Path: Armature/spine/spine.001/thigh.R
+    m_Weight: 0
+  - m_Path: Armature/spine/spine.001/thigh.R/shin.R
+    m_Weight: 0
+  - m_Path: Armature/spine/spine.001/thigh.R/shin.R/shin.R_end
+    m_Weight: 0
+  - m_Path: bag
+    m_Weight: 0
+  - m_Path: body
+    m_Weight: 0
+  - m_Path: cap
+    m_Weight: 0
+  - m_Path: GLASSES
+    m_Weight: 0
+  - m_Path: helmet
+    m_Weight: 0
+  - m_Path: wheels
+    m_Weight: 0

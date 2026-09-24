@@ -1449,7 +1449,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1181376857
+  GlobalObjectIdHash: 4040254205
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -1823,6 +1823,8 @@ MonoBehaviour:
   skateMovementState: Blend skate Tree
   attackDuration: 0.8
   attackIdleState: idle
+  throwDuration: 0.8
+  throwIdleState: idle
   visualModel: {fileID: 1375139801278413523}
   visualYawOffset: 180
   cameraTransform: {fileID: 988558385246031918}
@@ -1894,6 +1896,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4fb1945197d1f3e429b1dc8bb9d36a45, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ThrowableInventory
+  ShowTopMostFoldoutHeaderGroup: 1
   playerController: {fileID: 5674868521609799909}
   ownerStats: {fileID: 1013219027378598514}
   bombPrefab: {fileID: 6322852915340389648, guid: 818b76f248b020546ba60ed43ea59dd2, type: 3}
