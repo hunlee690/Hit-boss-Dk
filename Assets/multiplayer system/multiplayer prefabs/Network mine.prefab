@@ -30,7 +30,7 @@ Transform:
   m_GameObject: {fileID: 8639625503877450780}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.8, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -133,6 +133,7 @@ MonoBehaviour:
   lift: 100
   downTime: 2.5
   explosionEffect: {fileID: 0}
+  visualPrefab: {fileID: 6322852915340389648, guid: ade88653542f6824387798a7da345c09, type: 3}
 --- !u!114 &7684586034795813277
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -189,15 +190,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: bf39325426c9d2949a71fee9ae9c68e8, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: bf39325426c9d2949a71fee9ae9c68e8, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: bf39325426c9d2949a71fee9ae9c68e8, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: bf39325426c9d2949a71fee9ae9c68e8, type: 3}
       propertyPath: m_LocalPosition.x
@@ -242,6 +243,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: bf39325426c9d2949a71fee9ae9c68e8, type: 3}
       propertyPath: m_Name
       value: mine
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: bf39325426c9d2949a71fee9ae9c68e8, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

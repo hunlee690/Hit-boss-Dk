@@ -11,6 +11,7 @@ namespace HitBoss.Multiplayer.Skate
         public int damage = 3, restoreAmount = 1;
         public float radius = 3, force = 8, lift = 1.5f, downTime = 2.5f;
         public GameObject explosionEffect;
+        public GameObject visualPrefab;
         SkateCombat attacker;
         double born, explodeAt = double.MaxValue;
         bool consumed;
@@ -18,12 +19,31 @@ namespace HitBoss.Multiplayer.Skate
         public override void OnNetworkSpawn()
         {
             born = NetworkManager.ServerTime.Time;
+            EnsureVisualPrefab();
             var body = GetComponent<Rigidbody>();
             if (body != null) body.isKinematic = !IsServer || kind != SkateItemKind.Bomb;
             foreach (var col in GetComponentsInChildren<Collider>())
             {
                 col.enabled = IsServer;
                 if (attacker != null) foreach (var own in attacker.GetComponentsInChildren<Collider>()) Physics.IgnoreCollision(col, own);
+            }
+        }
+        void EnsureVisualPrefab()
+        {
+            if (visualPrefab == null || transform.Find("Mine Visual") != null) return;
+            var visual = Instantiate(visualPrefab, transform, false);
+            visual.name = "Mine Visual";
+            visual.transform.localPosition = new Vector3(0, .15f, 0);
+            visual.transform.localRotation = Quaternion.identity;
+            visual.transform.localScale = Vector3.one;
+            foreach (var behaviour in visual.GetComponentsInChildren<MonoBehaviour>(true))
+                behaviour.enabled = false;
+            foreach (var collider in visual.GetComponentsInChildren<Collider>(true))
+                collider.enabled = false;
+            foreach (var body in visual.GetComponentsInChildren<Rigidbody>(true))
+            {
+                body.isKinematic = true;
+                body.detectCollisions = false;
             }
         }
         void Update()

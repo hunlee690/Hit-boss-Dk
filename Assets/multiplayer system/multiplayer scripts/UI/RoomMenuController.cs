@@ -76,7 +76,9 @@ namespace HitBoss.Multiplayer
             if (matchmakingWaitScreen != null) matchmakingWaitScreen.SetActive(false);
         }
 
-        public void FindOnlineMode(string scene)
+        public void FindOnlineMode(string scene) => FindOnlineMode(scene, null);
+
+        public void FindOnlineMode(string scene, string mapId)
         {
             selectedMode = Array.FindIndex(manager.modes, m => m.sceneName == scene);
             if (selectedMode < 0) return;
@@ -92,7 +94,7 @@ namespace HitBoss.Multiplayer
             }
 
             UpdateMatchmakingUI();
-            _ = manager.FindOnlineAsync(selectedMode);
+            _ = manager.FindOnlineAsync(selectedMode, mapId);
         }
 
         async void CancelMatchmaking()
@@ -185,7 +187,13 @@ namespace HitBoss.Multiplayer
 
             var selected = manager.modes.Length > 0 ? manager.modes[Mathf.Clamp(selectedMode, 0, manager.modes.Length - 1)] : null;
 
-            modeText.text = selected != null ? selected.displayName + "  •  " + selected.minPlayers + "–" + (inRoom ? Math.Min(selected.maxPlayers, room.MaxPlayers) : selected.maxPlayers) + " players" : "No modes configured";
+            MultiplayerMap selectedMap = inRoom
+                ? manager.Map
+                : manager.MapsForMode(selectedMode).FirstOrDefault();
+            modeText.text = selected != null
+                ? selected.displayName + "  •  " + selected.minPlayers + "–" + (inRoom ? Math.Min(selected.maxPlayers, room.MaxPlayers) : selected.maxPlayers) + " players" +
+                  (selectedMap != null ? "\nMAP: " + selectedMap.displayName : "")
+                : "No modes configured";
 
             previousMode.interactable = nextMode.interactable = !manager.Busy && (!inRoom || manager.IsHost && !manager.PublicMatch && !room.IsLocked);
             statusText.text = manager.Status;

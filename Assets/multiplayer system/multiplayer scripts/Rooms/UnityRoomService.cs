@@ -8,7 +8,7 @@ namespace HitBoss.Multiplayer
     // Only this adapter knows how Unity stores room and ready data.
     public sealed class UnityRoomService
     {
-        public const string Version = "3";
+        public const string Version = "4";
         readonly IMultiplayerService service;
         public UnityRoomService(IMultiplayerService service = null) { this.service = service ?? MultiplayerService.Instance; }
         public static async Task RetryAsync(Func<Task> action)
@@ -20,7 +20,7 @@ namespace HitBoss.Multiplayer
                 { await Task.Delay(1500 * (attempt + 1)); }
             }
         }
-        public Task<IHostSession> CreateAsync(MultiplayerMode mode, string username, bool publicMatch = false) => service.CreateSessionAsync(new SessionOptions
+        public Task<IHostSession> CreateAsync(MultiplayerMode mode, MultiplayerMap map, string username, bool publicMatch = false) => service.CreateSessionAsync(new SessionOptions
         {
             Name = publicMatch ? "Online match" : "Private room", Type = "hitboss-private", IsPrivate = !publicMatch, MaxPlayers = mode.maxPlayers,
             PlayerProperties = PlayerData(username),
@@ -28,21 +28,22 @@ namespace HitBoss.Multiplayer
             {
                 { "version", new SessionProperty(Version, VisibilityPropertyOptions.Member) },
                 { "mode", new SessionProperty(mode.modeId, VisibilityPropertyOptions.Member) },
+                { "map", new SessionProperty(map.mapId, VisibilityPropertyOptions.Member) },
                 { "revision", new SessionProperty(Guid.NewGuid().ToString("N"), VisibilityPropertyOptions.Member) },
                 { "phase", new SessionProperty("room", VisibilityPropertyOptions.Member) },
                 { "public", new SessionProperty(publicMatch ? "1" : "0", VisibilityPropertyOptions.Member) },
                 { "bots", new SessionProperty(publicMatch ? "1" : "0", VisibilityPropertyOptions.Member) },
-                { "queue", new SessionProperty(publicMatch ? "hitboss-" + Version + "-" + mode.modeId : "private", VisibilityPropertyOptions.Public, PropertyIndex.String1) }
+                { "queue", new SessionProperty(publicMatch ? Queue(mode, map) : "private", VisibilityPropertyOptions.Public, PropertyIndex.String1) }
             }
         });
-        public async Task<ISession> FindPublicAsync(MultiplayerMode mode, string username)
+        public async Task<ISession> FindPublicAsync(MultiplayerMode mode, MultiplayerMap map, string username)
         {
             var results = await service.QuerySessionsAsync(new QuerySessionsOptions
             {
                 Count = 20,
                 FilterOptions = new List<FilterOption>
                 {
-                    new FilterOption(FilterField.StringIndex1, "hitboss-" + Version + "-" + mode.modeId, FilterOperation.Equal),
+                    new FilterOption(FilterField.StringIndex1, Queue(mode, map), FilterOperation.Equal),
                     new FilterOption(FilterField.AvailableSlots, "0", FilterOperation.Greater),
                     new FilterOption(FilterField.IsLocked, "false", FilterOperation.Equal)
                 }
@@ -52,7 +53,7 @@ namespace HitBoss.Multiplayer
                 ISession joined;
                 try { joined = await service.JoinSessionByIdAsync(candidate.Id, new JoinSessionOptions { Type = "hitboss-private", PlayerProperties = PlayerData(username) }); }
                 catch (SessionException) { continue; }
-                if (Property(joined, "version") == Version && Property(joined, "mode") == mode.modeId && Property(joined, "public") == "1" && !joined.IsLocked && Property(joined, "phase") == "room") return joined;
+                if (Property(joined, "version") == Version && Property(joined, "mode") == mode.modeId && Property(joined, "map") == map.mapId && Property(joined, "public") == "1" && !joined.IsLocked && Property(joined, "phase") == "room") return joined;
                 await joined.LeaveAsync();
             }
             return null;
@@ -77,11 +78,14 @@ namespace HitBoss.Multiplayer
             room.CurrentPlayer.SetProperty("ready", new PlayerProperty(ready ? Property(room, "revision") : "", VisibilityPropertyOptions.Member));
             await room.SaveCurrentPlayerDataAsync();
         }
-        public static async Task SetModeAsync(IHostSession room, MultiplayerMode mode)
+        public static async Task SetModeAsync(IHostSession room, MultiplayerMode mode, MultiplayerMap map)
         {
             room.SetProperty("mode", new SessionProperty(mode.modeId, VisibilityPropertyOptions.Member));
+            room.SetProperty("map", new SessionProperty(map.mapId, VisibilityPropertyOptions.Member));
             room.SetProperty("revision", new SessionProperty(Guid.NewGuid().ToString("N"), VisibilityPropertyOptions.Member));
             await room.SavePropertiesAsync();
         }
+        static string Queue(MultiplayerMode mode, MultiplayerMap map) =>
+            "hitboss-" + Version + "-" + mode.modeId + "-" + map.mapId;
     }
 }
