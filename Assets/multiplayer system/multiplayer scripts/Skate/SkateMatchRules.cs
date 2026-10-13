@@ -16,11 +16,18 @@ namespace HitBoss.Multiplayer.Skate
         float nextPickup, nextHud;
         void Awake()
         {
+            var arena = FindObjectsByType<MapArenaSetup>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                .FirstOrDefault(setup => setup.gameObject.activeInHierarchy);
             var legacy = FindFirstObjectByType<GameModeManager>();
-            spawnPoints = legacy != null ? legacy.spawnPoints : null;
+            spawnPoints = arena != null ? arena.playerSpawnPoints : legacy != null ? legacy.spawnPoints : null;
+            pickupPoints = arena != null ? arena.pickupSpawnPoints : null;
             if (legacy != null) { matchDuration = legacy.matchDuration; respawnDelay = legacy.respawnDelay; }
-            var spawner = FindFirstObjectByType<ArenaPickupSpawner>();
-            if (spawner != null) { pickupPoints = spawner.spawnPoints; spawner.enabled = false; spawner.StopAllCoroutines(); }
+            foreach (var spawner in FindObjectsByType<ArenaPickupSpawner>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (pickupPoints == null || pickupPoints.Length == 0) pickupPoints = spawner.spawnPoints;
+                spawner.enabled = false;
+                spawner.StopAllCoroutines();
+            }
             foreach (var pickup in FindObjectsByType<ThrowablePickup>(FindObjectsSortMode.None)) pickup.gameObject.SetActive(false);
             foreach (var pickup in FindObjectsByType<StaminaPickup>(FindObjectsSortMode.None)) pickup.gameObject.SetActive(false);
             hud = FindFirstObjectByType<MatchHUD>();
@@ -55,7 +62,10 @@ namespace HitBoss.Multiplayer.Skate
         public override Pose SpawnPose(int index)
         {
             if (spawnPoints != null && spawnPoints.Length > 0 && spawnPoints[index % spawnPoints.Length] != null)
-            { var point = spawnPoints[index % spawnPoints.Length]; return new Pose(point.position, point.rotation); }
+            {
+                var point = spawnPoints[index % spawnPoints.Length];
+                return new Pose(SurfacePosition(point.position, .3f), point.rotation);
+            }
             return new Pose(new Vector3(index % 4 * 2, 2, index / 4 * 2), Quaternion.identity);
         }
         public override void ConfigurePlayer(NetworkPlayer player, MultiplayerMode mode) { player.movement.startInSkateMode = true; }
@@ -87,12 +97,26 @@ namespace HitBoss.Multiplayer.Skate
             if (pickupPoints == null || pickupPoints.Length == 0) return;
             var existing = FindObjectsByType<SkateNetworkItem>(FindObjectsSortMode.None).Where(p => p.kind <= SkateItemKind.MinePickup).ToArray();
             if (existing.Length >= 5) return;
-            var free = pickupPoints.Where(p => p != null && existing.All(x => Vector3.Distance(x.transform.position, p.position) > 1)).ToArray();
+            var free = pickupPoints.Where(p => p != null && existing.All(x => Vector3.Distance(x.transform.position, SurfacePosition(p.position, .45f)) > 1)).ToArray();
             if (free.Length == 0) return;
             var options = new[] { staminaPickup, staminaPickup, bombPickup, minePickup };
             var prefab = options[Random.Range(0, options.Length)]; if (prefab == null) return;
             var spot = free[Random.Range(0, free.Length)];
-            Instantiate(prefab, spot.position, spot.rotation).NetworkObject.Spawn(true);
+            Instantiate(prefab, SurfacePosition(spot.position, .45f), spot.rotation).NetworkObject.Spawn(true);
+        }
+        static Vector3 SurfacePosition(Vector3 position, float clearance)
+        {
+            var hits = Physics.RaycastAll(position + Vector3.up * 3, Vector3.down, 100,
+                Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)
+                .OrderBy(hit => hit.distance);
+            foreach (var hit in hits)
+            {
+                if (hit.collider.GetComponentInParent<SkateCombat>() != null ||
+                    hit.collider.GetComponentInParent<SkateNetworkItem>() != null)
+                    continue;
+                return hit.point + Vector3.up * clearance;
+            }
+            return position;
         }
         public void SpawnProjectile(SkateCombat owner, bool isBomb)
         {
@@ -100,7 +124,8 @@ namespace HitBoss.Multiplayer.Skate
             var inventory = owner.Player.movement.GetComponent<ThrowableInventory>();
             var forward = owner.Player.movement.transform.forward; forward.y = 0; forward.Normalize();
             var position = isBomb ? (inventory.throwPoint != null ? inventory.throwPoint.position : owner.Position + Vector3.up) : owner.Position - forward * inventory.minePlaceDistance;
-            if (!isBomb && Physics.Raycast(position + Vector3.up * 2, Vector3.down, out var hit, 6, inventory.groundLayers, QueryTriggerInteraction.Ignore)) position = hit.point + Vector3.up * .05f;
+            int groundMask = inventory.groundLayers.value == 0 ? Physics.DefaultRaycastLayers : inventory.groundLayers.value;
+            if (!isBomb && Physics.Raycast(position + Vector3.up * 3, Vector3.down, out var hit, 100, groundMask, QueryTriggerInteraction.Ignore)) position = hit.point + Vector3.up * .1f;
             var item = Instantiate(isBomb ? bomb : mine, position, Quaternion.LookRotation(forward));
             item.SetAttacker(owner); item.NetworkObject.Spawn(true);
             if (isBomb) item.GetComponent<Rigidbody>().linearVelocity = forward * inventory.bombForwardSpeed + Vector3.up * inventory.bombUpwardSpeed;
@@ -122,7 +147,7 @@ namespace HitBoss.Multiplayer.Skate
             {
                 if (hud.endPanel != null) hud.endPanel.SetActive(true);
                 bool tie = sorted.Length > 1 && sorted[0].Kills.Value == sorted[1].Kills.Value && sorted[0].Deaths.Value == sorted[1].Deaths.Value;
-                if (hud.resultText != null) { hud.resultText.richText = false; hud.resultText.text = (tie ? "DRAW" : sorted[0].Player.Username.Value + " WINS!") + "\n" + text + "\nEsc: leave match"; }
+                if (hud.resultText != null) { hud.resultText.richText = false; hud.resultText.text = (tie ? "DRAW" : sorted[0].Player.Username.Value + " WINS!") + "\n" + text; }
             }
         }
     }

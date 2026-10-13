@@ -1824,6 +1824,7 @@ MonoBehaviour:
   attackDuration: 0.8
   attackIdleState: idle
   throwDuration: 0.8
+  throwBlendTime: 0.15
   throwIdleState: idle
   visualModel: {fileID: 1375139801278413523}
   visualYawOffset: 180
@@ -1933,6 +1934,7 @@ MonoBehaviour:
   settleHoldTime: 0.35
   groundCheckDistance: 5
   recoveryGroundOffset: 0.05
+  recoveryBlendTime: 0.35
   ignoreSelfCollisions: 1
 --- !u!114 &5881560308184974043
 MonoBehaviour:
