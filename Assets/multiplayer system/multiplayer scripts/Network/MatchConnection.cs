@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 namespace HitBoss.Multiplayer
@@ -19,7 +18,6 @@ namespace HitBoss.Multiplayer
         GameObject menuRig;
         PlayerCustomizationManager menuCustomization;
         public NetworkLoadout CurrentLoadout { get; private set; }
-        PauseMenu scenePause;
         bool callbacksBound, returning, quitting;
         public void BindMenu(GameObject rig)
         {
@@ -50,12 +48,6 @@ namespace HitBoss.Multiplayer
                 BindSceneCallbacks();
             }
             if (!network.IsListening) callbacksBound = false;
-            if (scenePause == null && RoomManager.Instance != null && RoomManager.Instance.InMatch && Keyboard.current?.escapeKey.wasPressedThisFrame == true)
-            {
-                var unlock = Cursor.lockState != CursorLockMode.None;
-                Cursor.lockState = unlock ? CursorLockMode.None : CursorLockMode.Locked; Cursor.visible = unlock;
-                network.LocalClient?.PlayerObject?.GetComponent<NetworkPlayer>()?.SetPaused(unlock);
-            }
         }
         public async Task WaitForPlayersAsync(int count, CancellationToken cancellation)
         {
@@ -77,9 +69,10 @@ namespace HitBoss.Multiplayer
         }
         void SceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            scenePause = FindFirstObjectByType<PauseMenu>();
             if (RoomManager.Instance?.Room == null || !network.IsListening || scene.name == menuScene) return;
             if (menuRig != null) { menuRig.SetActive(false); Destroy(menuRig); menuRig = null; }
+            if (!MapArenaSetup.ActivateMap(RoomManager.Instance.MapId))
+                Debug.LogWarning("[Maps] No arena setup was found in " + scene.name + ".");
             // These managers run local-only AI/match loops. Online mode rules take their place.
             foreach (var manager in FindObjectsByType<ModeManagerBase>(FindObjectsSortMode.None)) manager.enabled = false;
             var definition = RoomManager.Instance.Mode;
@@ -127,13 +120,6 @@ namespace HitBoss.Multiplayer
             Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
             if (SceneManager.GetActiveScene().name != menuScene) SceneManager.LoadScene(menuScene);
             else returning = false;
-        }
-        void OnGUI()
-        {
-            if (RoomManager.Instance?.InMatch != true) return;
-            if (ActiveRules is HitBoss.Multiplayer.Skate.SkateMatchRules) return;
-            GUI.Box(new Rect(16, 16, 330, 60), "Online free play • " + (RoomManager.Instance.Mode?.displayName ?? "Room") + "\nEsc: show cursor • combat rules coming next");
-            if (scenePause == null && Cursor.lockState == CursorLockMode.None && GUI.Button(new Rect(24, 82, 140, 36), "Leave room")) _ = RoomManager.Instance.LeaveAsync();
         }
         void OnApplicationQuit() { quitting = true; }
         void OnDestroy()

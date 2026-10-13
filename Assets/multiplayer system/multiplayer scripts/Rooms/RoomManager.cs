@@ -16,6 +16,7 @@ namespace HitBoss.Multiplayer
     {
         public static RoomManager Instance { get; private set; }
         public MultiplayerMode[] modes;
+        public MultiplayerMap[] maps;
         public MatchConnection connection;
         public ISession Room { get; private set; }
         public bool Busy { get; private set; }
@@ -24,6 +25,8 @@ namespace HitBoss.Multiplayer
         public event Action Changed;
         public bool IsHost => Room != null && Room.IsHost;
         public MultiplayerMode Mode => modes.FirstOrDefault(m => m != null && m.modeId == UnityRoomService.Property(Room, "mode"));
+        public string MapId => UnityRoomService.Property(Room, "map");
+        public MultiplayerMap Map => MultiplayerMaps.Find(maps, MapId);
         public bool InMatch => Room != null && UnityRoomService.Property(Room, "phase") == "playing";
         public bool PublicMatch => UnityRoomService.Property(Room, "public") == "1";
         public bool FillWithBots => UnityRoomService.Property(Room, "bots") == "1";
@@ -75,30 +78,50 @@ namespace HitBoss.Multiplayer
             }
             finally { Busy = false; Notify(); }
         }
-        public Task CreateAsync(int index) => RunAsync(async () =>
+        public MultiplayerMap[] MapsForMode(int index)
+        {
+            if (index < 0 || index >= modes.Length)
+                return Array.Empty<MultiplayerMap>();
+            return MultiplayerMaps.ForMode(maps, modes[index]);
+        }
+        MultiplayerMap RequireMap(MultiplayerMode mode, string mapId)
+        {
+            MultiplayerMap[] available = MultiplayerMaps.ForMode(maps, mode);
+            MultiplayerMap map = string.IsNullOrWhiteSpace(mapId)
+                ? available.FirstOrDefault()
+                : MultiplayerMaps.Find(available, mapId);
+            if (map == null) throw new ArgumentException("Select a map.");
+            map.ValidateConfiguration(mode);
+            return map;
+        }
+        public Task CreateAsync(int index) => CreateAsync(index, null);
+        public Task CreateAsync(int index, string mapId) => RunAsync(async () =>
         {
             RequireAccount(); if (Room != null) throw new InvalidOperationException("Leave your current room first.");
             if (index < 0 || index >= modes.Length) throw new ArgumentException("Select a mode.");
-            modes[index].ValidateConfiguration();
-            SetStatus("Creating private room...");
-            Attach(await service.CreateAsync(modes[index], OnlineManager.Instance.Profiles.Current.username));
-            SetStatus("Room created. Invite friends or share the code.");
+            var mode = modes[index]; mode.ValidateConfiguration();
+            var map = RequireMap(mode, mapId);
+            SetStatus("Creating private room on " + map.displayName + "...");
+            Attach(await service.CreateAsync(mode, map, OnlineManager.Instance.Profiles.Current.username));
+            SetStatus("Room created on " + map.displayName + ". Invite friends or share the code.");
         });
-        public Task FindOnlineAsync(int index) => RunAsync(async () =>
+        public Task FindOnlineAsync(int index) => FindOnlineAsync(index, null);
+        public Task FindOnlineAsync(int index, string mapId) => RunAsync(async () =>
         {
             RequireAccount();
             if (Room != null) throw new InvalidOperationException("Leave your current room first.");
             if (index < 0 || index >= modes.Length) throw new ArgumentException("Select a mode.");
             var mode = modes[index]; mode.ValidateConfiguration();
-            SetStatus("Looking for players in this mode...");
+            var map = RequireMap(mode, mapId);
+            SetStatus("Looking for players on " + map.displayName + "...");
             var name = OnlineManager.Instance.Profiles.Current.username;
-            var found = await service.FindPublicAsync(mode, name);
+            var found = await service.FindPublicAsync(mode, map, name);
             if (found == null)
             {
                 await Task.Delay(UnityEngine.Random.Range(1250, 2000));
-                found = await service.FindPublicAsync(mode, name);
+                found = await service.FindPublicAsync(mode, map, name);
             }
-            Attach(found ?? await service.CreateAsync(mode, name, true));
+            Attach(found ?? await service.CreateAsync(mode, map, name, true));
             if (!IsHost) await UnityRoomService.SetReadyAsync(Room, true);
             SetStatus(IsHost ? "Looking for players for 15 seconds. Empty places will use bots." : "Joined online match. Waiting for the host...");
         });
@@ -114,7 +137,11 @@ namespace HitBoss.Multiplayer
             RequireAccount(); if (Room != null) throw new InvalidOperationException("Leave your current room before joining another.");
             SetStatus("Joining room...");
             var joined = await service.JoinAsync(code, OnlineManager.Instance.Profiles.Current.username);
-            if (UnityRoomService.Property(joined, "version") != UnityRoomService.Version || !modes.Any(m => m != null && m.modeId == UnityRoomService.Property(joined, "mode")) || joined.IsLocked || UnityRoomService.Property(joined, "phase") != "room")
+            var joinedMode = modes.FirstOrDefault(m => m != null && m.modeId == UnityRoomService.Property(joined, "mode"));
+            var joinedMap = MultiplayerMaps.Find(maps, UnityRoomService.Property(joined, "map"));
+            if (UnityRoomService.Property(joined, "version") != UnityRoomService.Version ||
+                joinedMode == null || joinedMap == null || joinedMap.sceneName != joinedMode.sceneName ||
+                joined.IsLocked || UnityRoomService.Property(joined, "phase") != "room")
             { await joined.LeaveAsync(); throw new InvalidOperationException("This room has started or uses a different game version."); }
             Attach(joined);
             if (PublicMatch) await UnityRoomService.SetReadyAsync(Room, true);
@@ -161,7 +188,9 @@ namespace HitBoss.Multiplayer
             modes[index].ValidateConfiguration();
             if (Room.PlayerCount > modes[index].maxPlayers) throw new InvalidOperationException("There are too many players for this mode.");
             if (Room.MaxPlayers < modes[index].minPlayers) throw new InvalidOperationException("Create a new room for this mode's larger player requirement.");
-            await UnityRoomService.SetModeAsync(Room.AsHost(), modes[index]); SetStatus("Mode changed. Everyone must ready up again.");
+            var map = RequireMap(modes[index], null);
+            await UnityRoomService.SetModeAsync(Room.AsHost(), modes[index], map);
+            SetStatus("Mode changed to " + modes[index].displayName + " on " + map.displayName + ". Everyone must ready up again.");
         });
         public Task StartMatchAsync() => RunAsync(async () =>
         {
@@ -170,7 +199,8 @@ namespace HitBoss.Multiplayer
             var cancellation = roomLifetime.Token;
             await UnityRoomService.RetryAsync(() => host.RefreshAsync()); cancellation.ThrowIfCancellationRequested();
             var selected = Mode;
-            if (selected == null || Room.PlayerCount + BotCount < selected.minPlayers || Room.PlayerCount > selected.maxPlayers || !Room.Players.All(p => UnityRoomService.IsReady(Room, p)))
+            var selectedMap = Map;
+            if (selected == null || selectedMap == null || selectedMap.sceneName != selected.sceneName || Room.PlayerCount + BotCount < selected.minPlayers || Room.PlayerCount > selected.maxPlayers || !Room.Players.All(p => UnityRoomService.IsReady(Room, p)))
                 throw new InvalidOperationException("Wait for the required players and everyone to be ready.");
             selected.ValidateConfiguration();
             try

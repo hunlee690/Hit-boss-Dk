@@ -37,7 +37,7 @@ public class PlayerController : MonoBehaviour
     [Header("Attack")] public float attackDuration = 0.8f;
     public string attackIdleState = "idle";
 
-    [Header("Throw")] public float throwDuration = 0.8f;
+    [Header("Throw")]public float throwDuration = 0.8f;public float throwBlendTime = 0.15f;
     public string throwIdleState = "idle";
 
     [Header("Model Direction")] public Transform visualModel;
@@ -489,6 +489,21 @@ public class PlayerController : MonoBehaviour
         animator.SetLayerWeight(throwLayer, 0f);
         throwRoutine = null;
     }
+    IEnumerator FadeLayer(int layer, float target, float duration)
+{
+    float start = animator.GetLayerWeight(layer);
+    float time = 0f;
+    while (time < duration)
+    {    time += Time.deltaTime;
+         animator.SetLayerWeight(
+            layer,
+            Mathf.Lerp(start, target, time / duration)
+        );
+        yield return null;
+    }
+
+    animator.SetLayerWeight(layer, target);
+}
 
     void StartJump()
     {

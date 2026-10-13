@@ -34,6 +34,17 @@ public class PauseMenu : MonoBehaviour
         { if (paused) ResumeMatch(); else PauseMatch(); }
     }
 
+    void LateUpdate()
+    {
+        if (!paused) return;
+        if (resultScreen != null && resultScreen.activeSelf) resultScreen.SetActive(false);
+        if (pausePanel != null)
+        {
+            if (!pausePanel.activeSelf) pausePanel.SetActive(true);
+            pausePanel.transform.SetAsLastSibling();
+        }
+    }
+
     void FindPlayer()
     {
         onlinePlayer = NetworkManager.Singleton?.LocalClient?.PlayerObject?.GetComponent<NetworkPlayer>();
