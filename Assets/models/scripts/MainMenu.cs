@@ -11,11 +11,8 @@ using TMPro;
 [DefaultExecutionOrder(-50)]
 public class MainMenu : MonoBehaviour
 {
-    [System.Serializable]
-    public class GameMode { public string modeName; public Button button; public string sceneName; }
-
-    public GameObject mainMenu, customizeMenu, gameModeMenu, shopMenu, gamePassMenu, spinMenu, settingsMenu;
-    public Button customizeButton, playButton, customizeBackButton, gameModeBackButton;
+    public GameObject mainMenu, customizeMenu, mapSelectionMenu, shopMenu, gamePassMenu, spinMenu, settingsMenu;
+    public Button customizeButton, playButton, customizeBackButton, mapSelectionBackButton;
     public Button shopButton, coinShopButton, gemShopButton, gamePassButton, dailySpinButton, gemSpinButton, settingsButton;
     public Button shopBackButton, gamePassBackButton, spinBackButton, settingsBackButton;
     public Button[] shopCategoryButtons;
@@ -26,7 +23,6 @@ public class MainMenu : MonoBehaviour
     public Toggle fullscreenToggle;
     public Button qualityButton;
     public TMP_Text qualityLabel;
-    public GameMode[] gameModes;
     public GameObject playerSetup;
     public PlayerController playerController;
     public PlayerCamera playerCamera;
@@ -35,11 +31,10 @@ public class MainMenu : MonoBehaviour
     public Transform playerModel;
     public float rotateSpeed = .25f;
 
-    GameObject mapMenu;
     TMP_Text mapMenuTitle;
     readonly List<Button> mapButtons = new List<Button>();
     MultiplayerMap[] shownMaps = System.Array.Empty<MultiplayerMap>();
-    int pendingMode = -1;
+    bool spinOpenedFromShop;
 
     void Awake()
     {
@@ -48,8 +43,6 @@ public class MainMenu : MonoBehaviour
             playerController.enabled = false;
             var body = playerController.GetComponent<Rigidbody>();
             if (body != null) { body.isKinematic = true; body.useGravity = false; }
-            var coop = playerController.GetComponent<CoopPlayerController>();
-            if (coop != null) coop.enabled = false;
         }
         if (playerCamera != null)
         {
@@ -66,13 +59,18 @@ public class MainMenu : MonoBehaviour
         if (customizationManager != null) customizationManager.InitializeCustomization();
         if (customizeButton != null) customizeButton.onClick.AddListener(OpenCustomization);
         if (customizeBackButton != null) customizeBackButton.onClick.AddListener(OpenMainMenu);
-        if (playButton != null) playButton.onClick.AddListener(OpenGameModes);
-        if (gameModeBackButton != null) gameModeBackButton.onClick.AddListener(OpenMainMenu);
+        if (playButton != null) playButton.onClick.AddListener(OpenMapMenu);
+        if (mapSelectionBackButton != null) mapSelectionBackButton.onClick.AddListener(OpenMainMenu);
         Bind(shopButton, OpenShop); Bind(coinShopButton, OpenShop); Bind(gemShopButton, OpenShop);
         Bind(gamePassButton, OpenGamePass); Bind(dailySpinButton, () => OpenSpin("DAILY SPIN"));
         Bind(gemSpinButton, () => OpenSpin("FREE GEM SPIN")); Bind(settingsButton, OpenSettings);
         Bind(shopBackButton, OpenMainMenu); Bind(gamePassBackButton, OpenMainMenu);
-        Bind(spinBackButton, OpenMainMenu); Bind(settingsBackButton, OpenMainMenu);
+        if (spinBackButton != null)
+        {
+            spinBackButton.onClick.RemoveAllListeners();
+            spinBackButton.onClick.AddListener(CloseSpin);
+        }
+        Bind(settingsBackButton, OpenMainMenu);
 
         if (shopCategoryButtons != null)
             for (int i = 0; i < shopCategoryButtons.Length; i++)
@@ -83,22 +81,20 @@ public class MainMenu : MonoBehaviour
 
         SetupSettings();
 
-        for (int i = 0; i < gameModes.Length; i++)
-        {
-            int index = i;
-            if (gameModes[i].button != null) gameModes[i].button.onClick.AddListener(() => LoadGameMode(index));
-        }
-
         OpenMainMenu();
     }
 
     public void OpenMainMenu() => SetMenu(mainMenu);
     public void OpenCustomization() { SetMenu(customizeMenu); if (customizationManager != null) customizationManager.ShowHeadAccessories(); }
-    public void OpenGameModes() => SetMenu(gameModeMenu);
     public void OpenShop() { SetMenu(shopMenu); SelectShopSection(3); }
     public void OpenGamePass() => SetMenu(gamePassMenu);
-    public void OpenSpin(string title) { SetMenu(spinMenu); if (spinTitle != null) spinTitle.text = title; spinManager?.Open(title); }
-    public void OpenSpin(int spinIndex) { SetMenu(spinMenu); spinManager?.OpenSpin(spinIndex); }
+    public void OpenSpin(string title) { spinOpenedFromShop = false; SetMenu(spinMenu); if (spinTitle != null) spinTitle.text = title; spinManager?.Open(title); }
+    public void OpenSpin(int spinIndex) { spinOpenedFromShop = true; SetMenu(spinMenu); spinManager?.OpenSpin(spinIndex); }
+    public void CloseSpin()
+    {
+        if (spinOpenedFromShop) SetMenu(shopMenu);
+        else OpenMainMenu();
+    }
     public void OpenSettings() => SetMenu(settingsMenu);
     public void HideAllMenus() => SetMenu(null, false);
 
@@ -112,12 +108,11 @@ public class MainMenu : MonoBehaviour
         if (closeRoomUI && roomMenuController != null) roomMenuController.HideRoomUI();
         if (mainMenu != null) mainMenu.SetActive(menu == mainMenu);
         if (customizeMenu != null) customizeMenu.SetActive(menu == customizeMenu);
-        if (gameModeMenu != null) gameModeMenu.SetActive(menu == gameModeMenu);
+        if (mapSelectionMenu != null) mapSelectionMenu.SetActive(menu == mapSelectionMenu);
         if (shopMenu != null) shopMenu.SetActive(menu == shopMenu);
         if (gamePassMenu != null) gamePassMenu.SetActive(menu == gamePassMenu);
         if (spinMenu != null) spinMenu.SetActive(menu == spinMenu);
         if (settingsMenu != null) settingsMenu.SetActive(menu == settingsMenu);
-        if (mapMenu != null) mapMenu.SetActive(menu == mapMenu);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
@@ -180,28 +175,20 @@ public class MainMenu : MonoBehaviour
             qualityLabel.text = QualitySettings.names[QualitySettings.GetQualityLevel()];
     }
 
-    void LoadGameMode(int index)
+    void OpenMapMenu()
     {
-        if (index < 0 || index >= gameModes.Length) return;
-
-        pendingMode = index;
         var manager = RoomManager.Instance;
-        int roomMode = manager == null
-            ? -1
-            : System.Array.FindIndex(manager.modes,
-                mode => mode != null && mode.sceneName == gameModes[index].sceneName);
-
-        shownMaps = roomMode >= 0
-            ? manager.MapsForMode(roomMode)
+        shownMaps = manager != null && manager.modes != null && manager.modes.Length > 0
+            ? manager.MapsForMode(0)
             : System.Array.Empty<MultiplayerMap>();
 
         RefreshMapMenu();
-        SetMenu(mapMenu);
+        SetMenu(mapSelectionMenu);
     }
 
     void PlayMap(MultiplayerMap map)
     {
-        if (map == null || pendingMode < 0 || pendingMode >= gameModes.Length)
+        if (map == null)
             return;
 
         var rooms = roomMenuController != null
@@ -215,24 +202,23 @@ public class MainMenu : MonoBehaviour
             return;
         }
 
-        if (rooms != null)
-            rooms.FindOnlineMode(gameModes[pendingMode].sceneName, map.mapId);
+        var mode = RoomManager.Instance?.modes?.FirstOrDefault(value => value != null);
+        if (rooms != null && mode != null)
+            rooms.FindOnlineMode(mode.sceneName, map.mapId);
         else
             RoomManager.Instance?.SetStatus("Matchmaking menu is not ready yet.");
     }
 
     void BuildMapMenu()
     {
-        if (gameModeMenu == null || mapMenu != null)
+        if (mapSelectionMenu == null)
             return;
 
-        mapMenu = Instantiate(gameModeMenu, gameModeMenu.transform.parent);
-        mapMenu.name = "Map Menu";
-        mapMenu.transform.SetSiblingIndex(gameModeMenu.transform.GetSiblingIndex() + 1);
+        mapSelectionMenu.name = "Map Menu";
 
-        Transform panel = mapMenu.transform.Find("Panel");
+        Transform panel = mapSelectionMenu.transform.Find("Panel");
         if (panel == null)
-            panel = mapMenu.transform;
+            panel = mapSelectionMenu.transform;
 
         mapButtons.AddRange(panel.GetComponentsInChildren<Button>(true));
         if (mapButtons.Count == 0)
@@ -271,18 +257,18 @@ public class MainMenu : MonoBehaviour
             }
         }
 
-        Button back = mapMenu.GetComponentsInChildren<Button>(true)
+        Button back = mapSelectionMenu.GetComponentsInChildren<Button>(true)
             .FirstOrDefault(button => !button.transform.IsChildOf(panel));
         if (back != null)
         {
             back.onClick.RemoveAllListeners();
-            back.onClick.AddListener(OpenGameModes);
+            back.onClick.AddListener(OpenMainMenu);
         }
 
         TMP_Text source = mapButtons[0].GetComponentInChildren<TMP_Text>(true);
         if (source != null)
         {
-            mapMenuTitle = Instantiate(source, mapMenu.transform);
+            mapMenuTitle = Instantiate(source, mapSelectionMenu.transform);
             mapMenuTitle.name = "Map Menu Title";
             mapMenuTitle.text = "SELECT MAP";
             mapMenuTitle.alignment = TextAlignmentOptions.Center;
@@ -294,22 +280,19 @@ public class MainMenu : MonoBehaviour
             titleRect.sizeDelta = new Vector2(620, 55);
         }
 
-        mapMenu.SetActive(false);
+        mapSelectionMenu.SetActive(false);
     }
 
     void RefreshMapMenu()
     {
-        if (mapMenu == null)
+        if (mapSelectionMenu == null)
             BuildMapMenu();
 
         if (mapMenuTitle != null)
         {
-            string mode = pendingMode >= 0 && pendingMode < gameModes.Length
-                ? gameModes[pendingMode].modeName
-                : "MODE";
             mapMenuTitle.text = shownMaps.Length == 0
-                ? "NO MAPS AVAILABLE FOR " + mode.ToUpperInvariant()
-                : "SELECT MAP • " + mode.ToUpperInvariant();
+                ? "NO MAPS AVAILABLE"
+                : "SELECT MAP";
         }
 
         for (int i = 0; i < mapButtons.Count; i++)

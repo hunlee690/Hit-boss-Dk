@@ -27,6 +27,7 @@ namespace HitBoss.Multiplayer.Skate
         public Vector3 Position => Player.movement.transform.position;
         public int MaxHealth => stats.maxHealth;
         public int MaxStamina => stats.maxStamina;
+        public bool BotCanMelee => tuning != null && Stamina.Value >= Mathf.Min(tuning.slideStaminaCost, tuning.punchStaminaCost);
         CombatStats stats;
         CombatController tuning;
         RagdollController ragdoll;
@@ -52,6 +53,7 @@ namespace HitBoss.Multiplayer.Skate
             Downed.OnValueChanged += StateChanged; Finished.OnValueChanged += StateChanged; InputPaused.OnValueChanged += StateChanged;
             Kills.OnValueChanged += KillsChanged; Deaths.OnValueChanged += DeathsChanged;
             ApplyState();
+            SkateCombatEffects.AttachGroundTrail(Player.movement.transform, NetworkObjectId, Player.IsBot.Value);
         }
         public override void OnNetworkDespawn()
         {
@@ -128,7 +130,12 @@ namespace HitBoss.Multiplayer.Skate
             return true;
         }
         [Rpc(SendTo.Everyone)]
-        void AnimateRpc(byte action) { Player.movement.PlayCombatAnimation(action == 0 ? "slide" : action == 1 ? "punch" : "throw"); }
+        void AnimateRpc(byte action)
+        {
+            Player.movement.PlayCombatAnimation(action == 0 ? "slide" : action == 1 ? "punch" : "throw");
+            if (action < 2)
+                SkateCombatEffects.SpawnMelee(Player.movement.transform, action == 0);
+        }
         void MeleeOnServer(byte action)
         {
             float range = action == 0 ? 2.6f : 2.2f;
@@ -210,17 +217,24 @@ namespace HitBoss.Multiplayer.Skate
             rules.SpawnProjectile(this, Item.Value == 1);
             if (--ItemCount.Value <= 0) Item.Value = 0;
         }
-        public bool BotTarget(out Vector3 target)
+        public bool TryBotAttack(SkateCombat target)
         {
-            target = Position;
-            if (!CanAct) return false;
-            var enemy = Players.Where(p => p != this && p.Active && !p.Downed.Value && p.Health.Value > 0).OrderBy(p => (p.Position - Position).sqrMagnitude).FirstOrDefault();
-            if (enemy == null) return false;
-            target = enemy.Position;
-            float distance = Vector3.Distance(target, Position);
-            if (distance < 2) AttackOnServer(Stamina.Value >= tuning.punchStaminaCost ? (byte)1 : (byte)0);
-            else if (distance < 9 && ItemCount.Value > 0) AttackOnServer(2);
-            return true;
+            if (!IsServer || !CanAct || target == null || target == this ||
+                !target.Active || !target.CanAct || tuning == null)
+                return false;
+
+            float distance = Vector3.Distance(target.Position, Position);
+            if (distance >= 3.5f && distance < 10f && ItemCount.Value > 0)
+                return AttackOnServer(2);
+
+            if (distance > 2.65f)
+                return false;
+
+            if (Stamina.Value >= tuning.punchStaminaCost && Random.value < .55f)
+                return AttackOnServer(1);
+            if (Stamina.Value >= tuning.slideStaminaCost)
+                return AttackOnServer(0);
+            return false;
         }
     }
 }

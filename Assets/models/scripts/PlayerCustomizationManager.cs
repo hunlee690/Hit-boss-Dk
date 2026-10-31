@@ -38,6 +38,41 @@ public class PlayerCustomizationManager : MonoBehaviour
         public CustomizationItem[] items;
     }
 
+    [System.Serializable]
+    public class ItemPreviewSettings
+    {
+        [HideInInspector] public int settingsVersion;
+        [Tooltip("Vertical camera angle. Use 0 for a straight view, positive values for a view from above.")]
+        [Range(-60f, 60f)] public float cameraPitch = 0f;
+        [Range(0f, 360f)] public float startingYaw = 315f;
+        [Range(.6f, 2f)] public float zoom = 1.15f;
+        [Range(15f, 60f)] public float fieldOfView = 30f;
+
+        [Header("Camera Distance By Category")]
+        [Range(2f, 10f)] public float headDistance = 4f;
+        [Range(2f, 10f)] public float bodyDistance = 4.5f;
+        [Range(2f, 10f)] public float bagDistance = 4f;
+        [Range(2f, 10f)] public float skatesDistance = 4f;
+
+        [Header("Spin")]
+        [Range(0f, 360f)] public float spinDegreesPerSecond = 180f;
+        public bool clockwise = true;
+        [Range(96, 512)] public int resolution = 192;
+        public Color backgroundColor = new Color(.055f, .07f, .1f, 1f);
+
+        public float Distance(Category category)
+        {
+            switch (category)
+            {
+                case Category.Head: return headDistance;
+                case Category.Body: return bodyDistance;
+                case Category.Bag: return bagDistance;
+                case Category.Skates: return skatesDistance;
+                default: return 4f;
+            }
+        }
+    }
+
     [Header("Player")]
     public PlayerController playerController;
 
@@ -55,6 +90,9 @@ public class PlayerCustomizationManager : MonoBehaviour
     public TMP_Text selectedItemNameText;
     public Button equipButton;
     public TMP_Text equipButtonText;
+
+    [Header("Item Preview Settings")]
+    public ItemPreviewSettings itemPreviewSettings = new ItemPreviewSettings();
 
     [Header("Head Accessories")]
     public CategoryData headAccessories;
@@ -116,6 +154,12 @@ public class PlayerCustomizationManager : MonoBehaviour
             return;
 
         initialized = true;
+        if (itemPreviewSettings != null && itemPreviewSettings.settingsVersion < 1)
+        {
+            itemPreviewSettings.cameraPitch = 0f;
+            itemPreviewSettings.settingsVersion = 1;
+        }
+        RuntimeItemIconRenderer.EnsureIcons(this);
 
         equippedHead = GetStartingItem(headAccessories);
         equippedBody = GetStartingItem(body);
@@ -262,7 +306,7 @@ public class PlayerCustomizationManager : MonoBehaviour
             button.gameObject.SetActive(true);
             button.name = "None";
 
-            SetButtonVisual(button, "None", null);
+            SetButtonVisual(button, "None", null, null);
             button.onClick.AddListener(SelectNone);
         }
 
@@ -276,12 +320,12 @@ public class PlayerCustomizationManager : MonoBehaviour
             button.name = item.itemName;
 
             bool locked = ItemManager.Instance != null && !ItemManager.Instance.IsOwned(item.itemId);
-            SetButtonVisual(button, item.itemName + (locked ? "  LOCKED" : ""), item.icon);
+            SetButtonVisual(button, item.itemName + (locked ? "  LOCKED" : ""), item.icon, item.itemId);
             button.onClick.AddListener(() => SelectItem(index));
         }
     }
 
-    void SetButtonVisual(Button button, string itemName, Sprite icon)
+    void SetButtonVisual(Button button, string itemName, Sprite icon, string itemId)
     {
         TMP_Text text = button.GetComponentInChildren<TMP_Text>(true);
 
@@ -312,14 +356,31 @@ public class PlayerCustomizationManager : MonoBehaviour
             }
         }
 
+        if (iconImage == null && icon != null)
+        {
+            var preview = new GameObject("Item Preview", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            preview.layer = button.gameObject.layer;
+            preview.transform.SetParent(button.transform, false);
+            RectTransform rect = preview.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(.08f, .08f);
+            rect.anchorMax = new Vector2(.92f, .92f);
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+            iconImage = preview.GetComponent<Image>();
+        }
+
         if (iconImage != null)
         {
-            iconImage.gameObject.SetActive(icon != null);
+            bool isButtonBackground = iconImage.gameObject == button.gameObject;
+            if (!isButtonBackground)
+                iconImage.gameObject.SetActive(icon != null);
 
             if (icon != null)
             {
                 iconImage.sprite = icon;
+                iconImage.type = Image.Type.Simple;
                 iconImage.preserveAspect = true;
+                iconImage.raycastTarget = false;
+                RuntimeItemIconRenderer.ConfigureAnimation(iconImage, itemId);
             }
         }
     }

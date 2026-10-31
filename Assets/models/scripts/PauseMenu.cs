@@ -11,12 +11,11 @@ public class PauseMenu : MonoBehaviour
     public Button resumeButton, quitMatchButton;
     public string playerTag = "Player", cameraTag = "MainCamera", mainMenuScene = "main menu";
     PlayerController playerController;
-    CoopPlayerController coop;
     PlayerCamera playerCamera;
     CombatController combat;
     ThrowableInventory inventory;
     NetworkPlayer onlinePlayer;
-    bool paused, quitting, movementEnabled, coopEnabled, combatEnabled, inventoryEnabled, resultWasOpen;
+    bool paused, quitting, movementEnabled, combatEnabled, inventoryEnabled, resultWasOpen;
     float previousTimeScale = 1;
     public bool IsPaused => paused;
 
@@ -59,7 +58,6 @@ public class PauseMenu : MonoBehaviour
             playerController = player != null ? player.GetComponentInChildren<PlayerController>(true) : null;
             playerCamera = playerController != null ? playerController.transform.root.GetComponentInChildren<PlayerCamera>(true) : null;
         }
-        coop = playerController != null ? playerController.GetComponent<CoopPlayerController>() : null;
         combat = playerController != null ? playerController.GetComponent<CombatController>() : null;
         inventory = playerController != null ? playerController.GetComponent<ThrowableInventory>() : null;
     }
@@ -80,11 +78,9 @@ public class PauseMenu : MonoBehaviour
             previousTimeScale = Time.timeScale;
             Time.timeScale = 0;
             movementEnabled = playerController != null && playerController.enabled;
-            coopEnabled = coop != null && coop.enabled;
             combatEnabled = combat != null && combat.enabled;
             inventoryEnabled = inventory != null && inventory.enabled;
             if (movementEnabled) { playerController.StopImmediately(); playerController.enabled = false; }
-            if (coopEnabled) { coop.StopImmediately(); coop.enabled = false; }
             if (combat != null) combat.enabled = false;
             if (inventory != null) inventory.enabled = false;
             if (playerCamera != null) playerCamera.enabled = false;
@@ -105,7 +101,6 @@ public class PauseMenu : MonoBehaviour
         {
             Time.timeScale = previousTimeScale;
             if (playerController != null) playerController.enabled = movementEnabled;
-            if (coop != null) coop.enabled = coopEnabled;
             if (combat != null) combat.enabled = combatEnabled;
             if (inventory != null) inventory.enabled = inventoryEnabled;
             if (playerCamera != null) playerCamera.enabled = true;

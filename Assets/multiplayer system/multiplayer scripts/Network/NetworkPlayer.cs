@@ -8,7 +8,6 @@ namespace HitBoss.Multiplayer
     public sealed class NetworkPlayer : NetworkBehaviour
     {
         public PlayerController movement;
-        public CoopPlayerController coopMovement;
         public PlayerCamera playerCamera;
         public MatchParticipant participant;
         public PlayerAppearance appearance;
@@ -75,15 +74,7 @@ namespace HitBoss.Multiplayer
                 !paused &&
                 (combat == null || !combat.Active || combat.CanAct);
 
-            movement.enabled =
-                allowed &&
-                (mode == null || !mode.useCoopMovement);
-
-            if (coopMovement != null)
-                coopMovement.enabled =
-                    allowed &&
-                    mode != null &&
-                    mode.useCoopMovement;
+            movement.enabled = allowed;
 
             if (playerCamera != null)
                 playerCamera.enabled =
@@ -95,17 +86,7 @@ namespace HitBoss.Multiplayer
         void SetLocalControl(bool local)
         {
             if (movement != null)
-                movement.enabled =
-                    local &&
-                    !paused &&
-                    (mode == null || !mode.useCoopMovement);
-
-            if (coopMovement != null)
-                coopMovement.enabled =
-                    local &&
-                    !paused &&
-                    mode != null &&
-                    mode.useCoopMovement;
+                movement.enabled = local && !paused;
 
             if (playerCamera != null)
                 playerCamera.enabled = local && !paused;
@@ -190,7 +171,7 @@ namespace HitBoss.Multiplayer
             LoadoutChanged(default, Loadout.Value);
 
             if (movement != null)
-                movement.SetSkateMode(mode != null && mode.skating);
+                movement.SetSkateMode(true);
 
             if (IsOwner)
             {
@@ -216,7 +197,7 @@ namespace HitBoss.Multiplayer
             Skating.OnValueChanged += SkateChanged;
 
             if (IsOwner)
-                Skating.Value = mode != null && mode.skating;
+                Skating.Value = true;
             else
                 SkateChanged(false, Skating.Value);
 
@@ -239,8 +220,6 @@ namespace HitBoss.Multiplayer
                 if (movement != null && movement.enabled)
                     movement.StopImmediately();
 
-                if (coopMovement != null && coopMovement.enabled)
-                    coopMovement.StopImmediately();
             }
 
             paused = value;

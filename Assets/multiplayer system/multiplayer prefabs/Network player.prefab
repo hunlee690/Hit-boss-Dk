@@ -1478,7 +1478,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HitBoss.Multiplayer.NetworkPlayer
   ShowTopMostFoldoutHeaderGroup: 1
   movement: {fileID: 5674868521609799909}
-  coopMovement: {fileID: 5881560308184974043}
   playerCamera: {fileID: 1031929340156051205}
   participant: {fileID: 7009891744376421725}
   appearance: {fileID: 2582864889987157949}
@@ -1709,7 +1708,6 @@ GameObject:
   - component: {fileID: 7990014476403455553}
   - component: {fileID: 3123181482987757816}
   - component: {fileID: 1284531314580901289}
-  - component: {fileID: 5881560308184974043}
   - component: {fileID: 3686961045493525696}
   m_Layer: 0
   m_Name: Player
@@ -1799,9 +1797,9 @@ MonoBehaviour:
   moveSpeed: 5
   moveSmoothTime: 0.3
   rotationSmoothTime: 0.2
-  skateForwardSpeed: 8
-  skateReverseSpeed: 4
-  skateAcceleration: 4
+  skateForwardSpeed: 15
+  skateReverseSpeed: 7.5
+  skateAcceleration: 8
   skateBrakeSpeed: 6
   skateTurnSpeed: 100
   skateTurnSmooth: 6
@@ -1936,30 +1934,6 @@ MonoBehaviour:
   recoveryGroundOffset: 0.05
   recoveryBlendTime: 0.35
   ignoreSelfCollisions: 1
---- !u!114 &5881560308184974043
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3399289482480405679}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1fbfb3127ca97e9438f164d894b9375f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CoopPlayerController
-  moveSpeed: 5
-  moveSmoothTime: 0.12
-  rotationSmoothTime: 0.12
-  jumpHeight: 1.5
-  jumpDuration: 0.4
-  jumpBuildUp: 0.1
-  rb: {fileID: 1719139788668811495}
-  animator: {fileID: 7890507593243985739}
-  cameraTransform: {fileID: 988558385246031918}
-  visualModel: {fileID: 1375139801278413523}
-  visualYawOffset: 180
-  runAnimationSpeed: 1.2
 --- !u!114 &3686961045493525696
 MonoBehaviour:
   m_ObjectHideFlags: 0

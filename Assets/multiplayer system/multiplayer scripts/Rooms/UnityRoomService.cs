@@ -8,7 +8,7 @@ namespace HitBoss.Multiplayer
     // Only this adapter knows how Unity stores room and ready data.
     public sealed class UnityRoomService
     {
-        public const string Version = "4";
+        public const string Version = "5";
         readonly IMultiplayerService service;
         public UnityRoomService(IMultiplayerService service = null) { this.service = service ?? MultiplayerService.Instance; }
         public static async Task RetryAsync(Func<Task> action)

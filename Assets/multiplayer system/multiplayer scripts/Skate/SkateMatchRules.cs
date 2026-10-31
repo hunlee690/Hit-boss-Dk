@@ -61,12 +61,32 @@ namespace HitBoss.Multiplayer.Skate
         }
         public override Pose SpawnPose(int index)
         {
-            if (spawnPoints != null && spawnPoints.Length > 0 && spawnPoints[index % spawnPoints.Length] != null)
+            Transform[] valid = spawnPoints == null
+                ? System.Array.Empty<Transform>()
+                : spawnPoints.Where(point => point != null).ToArray();
+
+            if (valid.Length > 0)
             {
-                var point = spawnPoints[index % spawnPoints.Length];
-                return new Pose(SurfacePosition(point.position, .3f), point.rotation);
+                int baseIndex = index % valid.Length;
+                int duplicate = index / valid.Length;
+                Transform point = valid[baseIndex];
+                Vector3 position = point.position;
+
+                if (duplicate > 0)
+                {
+                    int sequence = duplicate - 1;
+                    float angle = (sequence * 137.508f + baseIndex * 31f) * Mathf.Deg2Rad;
+                    float radius = 1.8f * (1 + sequence / 6);
+                    position += point.right * (Mathf.Cos(angle) * radius)
+                        + point.forward * (Mathf.Sin(angle) * radius);
+                }
+
+                return new Pose(SurfacePosition(position, .3f), point.rotation);
             }
-            return new Pose(new Vector3(index % 4 * 2, 2, index / 4 * 2), Quaternion.identity);
+
+            int column = index % 5;
+            int row = index / 5;
+            return new Pose(SurfacePosition(new Vector3((column - 2) * 2f, 2, row * 2f), .3f), Quaternion.identity);
         }
         public override void ConfigurePlayer(NetworkPlayer player, MultiplayerMode mode) { player.movement.startInSkateMode = true; }
         public override void BeginServerMatch()

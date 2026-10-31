@@ -182,16 +182,6 @@ namespace HitBoss.Multiplayer
             if (Room == null || IsHost || Room.IsLocked) return;
             await UnityRoomService.SetReadyAsync(Room, !UnityRoomService.IsReady(Room, Room.CurrentPlayer));
         });
-        public Task SelectModeAsync(int index) => RunAsync(async () =>
-        {
-            if (!IsHost || PublicMatch || Room.IsLocked || index < 0 || index >= modes.Length) return;
-            modes[index].ValidateConfiguration();
-            if (Room.PlayerCount > modes[index].maxPlayers) throw new InvalidOperationException("There are too many players for this mode.");
-            if (Room.MaxPlayers < modes[index].minPlayers) throw new InvalidOperationException("Create a new room for this mode's larger player requirement.");
-            var map = RequireMap(modes[index], null);
-            await UnityRoomService.SetModeAsync(Room.AsHost(), modes[index], map);
-            SetStatus("Mode changed to " + modes[index].displayName + " on " + map.displayName + ". Everyone must ready up again.");
-        });
         public Task StartMatchAsync() => RunAsync(async () =>
         {
             if (!IsHost || Room.IsLocked) return;

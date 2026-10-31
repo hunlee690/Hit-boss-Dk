@@ -8,9 +8,9 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Lower = faster acceleration/deceleration.")] public float moveSmoothTime = 0.12f;
     [Tooltip("Lower = faster turning. Try 0.15 - 0.30")] public float rotationSmoothTime = 0.2f;
 
-    [Header("Skating")] public float skateForwardSpeed = 8f;
-    public float skateReverseSpeed = 4f;
-    public float skateAcceleration = 4f;
+    [Header("Skating")] public float skateForwardSpeed = 15f;
+    public float skateReverseSpeed = 7.5f;
+    public float skateAcceleration = 8f;
     public float skateBrakeSpeed = 6f;
     public float skateTurnSpeed = 100f;
     public float skateTurnSmooth = 6f;

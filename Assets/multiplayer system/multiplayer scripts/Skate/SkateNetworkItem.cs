@@ -85,6 +85,7 @@ namespace HitBoss.Multiplayer.Skate
         [Rpc(SendTo.Everyone)]
         void EffectRpc(Vector3 position)
         {
+            SkateCombatEffects.SpawnExplosion(position, kind == SkateItemKind.Mine);
             if (explosionEffect != null) Destroy(Instantiate(explosionEffect, position, Quaternion.identity), 4);
         }
     }
