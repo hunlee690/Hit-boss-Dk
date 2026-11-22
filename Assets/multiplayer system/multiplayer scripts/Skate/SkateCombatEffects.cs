@@ -9,10 +9,70 @@ namespace HitBoss.Multiplayer.Skate
     {
         static Material particleMaterial;
         static Material trailMaterial;
+        static AudioClip pickupSound;
+
+        public static void ConfigureMaterials(Material particles, Material trails, AudioClip pickup=null)
+        {
+            if (particles != null) particleMaterial = particles;
+            if (trails != null) trailMaterial = trails;
+            pickupSound=pickup;
+        }
+
+        public static void SpawnPickupPop(Vector3 position)
+        {
+            if(!AllowEffect(position,45f))return;
+            var pop=CreateParticles("Mystery box pickup pop",position,new Color(.3f,.9f,1f,1f),new Color(.8f,.35f,1f,0),16,3.8f,.12f,.5f,.25f);
+            var shape=pop.shape;shape.shapeType=ParticleSystemShapeType.Sphere;shape.radius=.4f;
+            var main=pop.main;main.startColor=new ParticleSystem.MinMaxGradient(new Color(.3f,.9f,1f),new Color(1f,.8f,.18f));
+            RestartBurst(pop,16);
+            var ring=CreateParticles("Pickup sparkle ring",position,new Color(1f,.9f,.4f,1),Color.clear,12,2f,.07f,.32f,0);
+            var ringShape=ring.shape;ringShape.shapeType=ParticleSystemShapeType.Circle;ringShape.radius=.5f;
+            ring.transform.rotation=Quaternion.Euler(90,0,0);RestartBurst(ring,12);
+            if(pickupSound!=null)AudioSource.PlayClipAtPoint(pickupSound,position,.28f);
+        }
+
+        static int budgetFrame, effectsThisFrame;
+        public static bool Nearby(Vector3 position,float distance=65f)
+        {
+            Camera camera=null;
+            foreach(var player in SkateCombat.Players)
+                if(player!=null && player.IsOwner && !player.Player.IsBot.Value) { camera=player.Player.playerCamera!=null?player.Player.playerCamera.GetComponent<Camera>():null; break; }
+            if(camera==null)camera=Camera.main;
+            return camera==null || (camera.transform.position-position).sqrMagnitude<distance*distance;
+        }
+        static bool AllowEffect(Vector3 position,float distance)
+        {
+            if(!Nearby(position,distance))return false;
+            if(budgetFrame!=Time.frameCount){budgetFrame=Time.frameCount;effectsThisFrame=0;}
+            return ++effectsThisFrame<=6;
+        }
+        public static void SpawnBoost(Transform skater, float seconds)
+        {
+            if(skater==null || !AllowEffect(skater.position,45f))return;
+            var green = new Color(.62f, 1f, .15f, .95f);
+            var gold = new Color(1f, .9f, .25f, 0f);
+            var burst = CreateParticles("Boost flash", skater.position - skater.forward * .45f,
+                green, gold, 12, 6f, .1f, .5f, 0f);
+            var shape = burst.shape;
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = 24f;
+            shape.radius = .35f;
+            burst.transform.rotation = Quaternion.LookRotation(-skater.forward);
+            RestartBurst(burst, 12);
+
+            for (int side = -1; side <= 1; side += 2)
+            {
+                var streak = new GameObject("Speed Boost Streak");
+                var trail = streak.AddComponent<TrailRenderer>();
+                ConfigureTrail(trail, .25f, .36f, green, gold);
+                streak.AddComponent<SkateTemporaryTrail>().Configure(
+                    skater, new Vector3(side * .38f, -.45f, -.55f), seconds, .4f);
+            }
+        }
 
         public static void SpawnMelee(Transform fighter, bool slide)
         {
-            if (fighter == null) return;
+            if (fighter == null || !AllowEffect(fighter.position,40f)) return;
             Vector3 position = fighter.position + Vector3.up * (slide ? .35f : 1.05f)
                 + fighter.forward * (slide ? 1.15f : .9f);
             Color primary = slide
@@ -44,6 +104,7 @@ namespace HitBoss.Multiplayer.Skate
 
         public static void SpawnExplosion(Vector3 position, bool mine)
         {
+            if(!AllowEffect(position,70f))return;
             Color hot = mine
                 ? new Color(1f, .28f, .04f, 1f)
                 : new Color(1f, .65f, .08f, 1f);
@@ -54,7 +115,7 @@ namespace HitBoss.Multiplayer.Skate
                 position + Vector3.up * .2f,
                 hot,
                 smokeColor,
-                mine ? 38 : 52,
+                mine ? 22 : 28,
                 mine ? 7f : 8.5f,
                 .18f,
                 mine ? .85f : 1.1f,
@@ -62,14 +123,14 @@ namespace HitBoss.Multiplayer.Skate
             ParticleSystem.ShapeModule burstShape = burst.shape;
             burstShape.shapeType = ParticleSystemShapeType.Sphere;
             burstShape.radius = .22f;
-            RestartBurst(burst, mine ? 38 : 52);
+            RestartBurst(burst, mine ? 22 : 28);
 
             ParticleSystem sparks = CreateParticles(
                 "Blast Sparks",
                 position + Vector3.up * .25f,
                 new Color(1f, .95f, .5f, 1f),
                 new Color(1f, .15f, .02f, 0f),
-                mine ? 24 : 34,
+                mine ? 12 : 16,
                 mine ? 10f : 12f,
                 .045f,
                 .55f,
@@ -77,17 +138,17 @@ namespace HitBoss.Multiplayer.Skate
             ParticleSystem.ShapeModule sparkShape = sparks.shape;
             sparkShape.shapeType = ParticleSystemShapeType.Sphere;
             sparkShape.radius = .08f;
-            RestartBurst(sparks, mine ? 24 : 34);
+            RestartBurst(sparks, mine ? 12 : 16);
 
             ParticleSystem smoke = CreateParticles(
                 "Blast Smoke",
                 position + Vector3.up * .35f,
-                new Color(.32f, .29f, .27f, .6f),
+                new Color(.32f, .29f, .27f, .38f),
                 new Color(.08f, .08f, .08f, 0f),
-                mine ? 16 : 23,
+                mine ? 8 : 10,
                 mine ? 2.2f : 2.8f,
-                mine ? .55f : .72f,
-                mine ? 1.5f : 2f,
+                mine ? .4f : .5f,
+                mine ? 1f : 1.2f,
                 -.12f);
             ParticleSystem.ShapeModule smokeShape = smoke.shape;
             smokeShape.shapeType = ParticleSystemShapeType.Sphere;
@@ -97,7 +158,7 @@ namespace HitBoss.Multiplayer.Skate
             smokeNoise.strength = .45f;
             smokeNoise.frequency = .35f;
             smokeNoise.scrollSpeed = .2f;
-            RestartBurst(smoke, mine ? 16 : 23);
+            RestartBurst(smoke, mine ? 8 : 10);
         }
 
         public static void AttachGroundTrail(Transform player, ulong networkId, bool bot)
@@ -198,7 +259,7 @@ namespace HitBoss.Multiplayer.Skate
             particles.Play(true);
         }
 
-        static Material EffectMaterial()
+        internal static Material EffectMaterial()
         {
             if (particleMaterial != null) return particleMaterial;
             Shader shader = Shader.Find("Universal Render Pipeline/Particles/Unlit")
@@ -272,10 +333,15 @@ namespace HitBoss.Multiplayer.Skate
         TrailRenderer[] trails;
         Vector3 lastPosition;
         bool ready;
+        Color normalColor;
+        bool nearby = true;
+        float nextVisibilityCheck;
+        readonly RaycastHit[] groundHits = new RaycastHit[16];
 
         public void Configure(Transform value, Color color)
         {
             target = value;
+            normalColor = color;
             lastPosition = target.position;
             trails = new TrailRenderer[2];
             for (int i = 0; i < trails.Length; i++)
@@ -284,12 +350,23 @@ namespace HitBoss.Multiplayer.Skate
                 trails[i] = trailObject.AddComponent<TrailRenderer>();
                 SkateCombatEffects.ConfigureTrail(
                     trails[i],
-                    .12f,
-                    1.35f,
-                    new Color(color.r, color.g, color.b, .62f),
+                    .085f,
+                    .8f,
+                    new Color(color.r, color.g, color.b, .35f),
                     new Color(color.r, color.g, color.b, 0f));
             }
             ready = true;
+        }
+
+        public void SetBoosting(bool boosting)
+        {
+            Color color = boosting ? new Color(.7f, 1f, .13f) : normalColor;
+            foreach (TrailRenderer trail in trails)
+            {
+                trail.startColor = new Color(color.r, color.g, color.b, boosting ? .65f : .35f);
+                trail.endColor = new Color(color.r, color.g, color.b, 0f);
+                trail.widthMultiplier = boosting ? 1.5f : 1f;
+            }
         }
 
         void LateUpdate()
@@ -299,7 +376,8 @@ namespace HitBoss.Multiplayer.Skate
             float speed = moved / Mathf.Max(Time.deltaTime, .001f);
             lastPosition = target.position;
             bool teleported = moved > 3f;
-            bool moving = speed > .55f && !teleported;
+            if(Time.time>=nextVisibilityCheck){nearby=SkateCombatEffects.Nearby(target.position,45f);nextVisibilityCheck=Time.time+.2f;}
+            bool moving = nearby && speed > .55f && !teleported;
 
             for (int i = 0; i < trails.Length; i++)
             {
@@ -308,21 +386,16 @@ namespace HitBoss.Multiplayer.Skate
                 float side = i == 0 ? -.18f : .18f;
                 Vector3 wanted = target.position - target.forward * .38f + target.right * side + Vector3.up * .25f;
                 Vector3 grounded = wanted;
-                RaycastHit[] hits = Physics.RaycastAll(
-                    wanted + Vector3.up * 1.5f,
-                    Vector3.down,
-                    4f,
-                    ~0,
-                    QueryTriggerInteraction.Ignore);
-                System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
-                foreach (RaycastHit hit in hits)
+                int hitCount = moving ? Physics.RaycastNonAlloc(wanted + Vector3.up * 1.5f, Vector3.down, groundHits, 4f, ~0, QueryTriggerInteraction.Ignore) : 0;
+                float best = float.PositiveInfinity; bool hasGround=false;
+                for(int h=0;h<hitCount;h++)
                 {
-                    if (hit.collider.transform.root == target.root) continue;
-                    grounded = hit.point + Vector3.up * .035f;
-                    break;
+                    var hit=groundHits[h];
+                    if(hit.collider.GetComponentInParent<NetworkPlayer>()!=null || hit.collider.GetComponentInParent<SkateNetworkItem>()!=null || hit.normal.y<.4f || hit.distance>=best)continue;
+                    best=hit.distance;hasGround=true;grounded=hit.point+hit.normal*.035f;
                 }
                 trails[i].transform.position = grounded;
-                trails[i].emitting = moving;
+                trails[i].emitting = moving && hasGround;
             }
         }
 

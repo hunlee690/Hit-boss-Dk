@@ -114,11 +114,7 @@ namespace HitBoss.Multiplayer
                     capsule.enabled = local || IsServer;
             }
 
-            foreach (var combat in GetComponentsInChildren<CombatController>(true))
-                combat.enabled = false;
 
-            foreach (var inventory in GetComponentsInChildren<ThrowableInventory>(true))
-                inventory.enabled = local || IsServer;
         }
 
         public override void OnNetworkSpawn()

@@ -1,0 +1,86 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36ab50144d7f5724aae080d7ea667097, type: 3}
+  m_Name: Race UI Theme
+  m_EditorClassIdentifier: Assembly-CSharp::HitBoss.Multiplayer.Skate.RaceUITheme
+  panel: {fileID: 21300000, guid: 0f8e1ce8ec95d854e81b792110214987, type: 3}
+  leaderboard: {fileID: 21300000, guid: a5662de164b241b439718972ba22740c, type: 3}
+  abilityPanel: {fileID: 21300000, guid: e48541e3675205142a451d838a21afbd, type: 3}
+  greenButton: {fileID: 21300000, guid: 673136b40d449bb41bbcffa44f7d59ea, type: 3}
+  redButton: {fileID: 21300000, guid: 237093310d1bfc44887325b3ae783c8e, type: 3}
+  purpleButton: {fileID: 21300000, guid: 36a60d8cd83e3e74a95b981433a77020, type: 3}
+  iconFrame: {fileID: 21300000, guid: e1f938163803f8e4d91a66e77090af58, type: 3}
+  row: {fileID: 21300000, guid: 37dc3cfea6e12c64e857726088335b18, type: 3}
+  selectedRow: {fileID: 21300000, guid: 9ec87e483be5e7240acffff8e5b5ed3e, type: 3}
+  statBar: {fileID: 21300000, guid: 59b7bd349b241764ebc42582e2daecaa, type: 3}
+  titleBanner: {fileID: 21300000, guid: aeeadcd861d1f2449ab8f2f0d0a1e665, type: 3}
+  titleWing: {fileID: 21300000, guid: 7fe8f59c6a46c3848952a8d17bed34b2, type: 3}
+  health: {fileID: 21300000, guid: a5484c0338f2d96488e0e7d1ec0dc8cb, type: 3}
+  fullHeart: {fileID: 21300000, guid: dcf4c7ea765eb5a45a66e281b6021afa, type: 3}
+  emptyHeart: {fileID: 21300000, guid: 41fc5fc2f1c115e47bb6317415e87eb8, type: 3}
+  lap: {fileID: 21300000, guid: 81b422050924d46489206ab1d06200af, type: 3}
+  slash: {fileID: 21300000, guid: a96bff432979df74c8350ba9f35b738f, type: 3}
+  boostTrack: {fileID: 21300000, guid: 75b38d8ab97841c4aa0e4dd14ff04873, type: 3}
+  boostFill: {fileID: 21300000, guid: ec99ddbcb583c4447abfba0b90eef455, type: 3}
+  boostIcon: {fileID: 21300000, guid: 3e243789bc09f2d49914199b77c28227, type: 3}
+  boostEmpty: {fileID: 21300000, guid: 63a2095f065dd014cbaed99ba3face19, type: 3}
+  itemEmpty: {fileID: 21300000, guid: dad0c79cf249ea94d9007a0ef7890bd9, type: 3}
+  punch: {fileID: 21300000, guid: e4c2e076594000843816b21c70b809a6, type: 3}
+  digits:
+  - {fileID: 21300000, guid: 20c02a13ef48c194ea4bd44995c62d1c, type: 3}
+  - {fileID: 21300000, guid: b1605bd4b3971754ea02d2d8a307ee12, type: 3}
+  - {fileID: 21300000, guid: 0604b19c5d7cfe544b536d8b4a6f7113, type: 3}
+  - {fileID: 21300000, guid: 1269e795e842adb46a0c5e121b92d668, type: 3}
+  - {fileID: 21300000, guid: b08a2b6a0d7a22b4185ad608c939ae10, type: 3}
+  - {fileID: 21300000, guid: ff33dfd0245537047b3e4044a68f8bd6, type: 3}
+  - {fileID: 21300000, guid: a21615c96e6597c4e8b0eb4bb6b5f0d9, type: 3}
+  - {fileID: 21300000, guid: ca207e569b6267646b0e2c858f3fd545, type: 3}
+  - {fileID: 21300000, guid: 588bf02f7efeb2d45beb10ca34f53343, type: 3}
+  - {fileID: 21300000, guid: 90dd086416a417545b97145228cbfb4a, type: 3}
+  go: {fileID: 21300000, guid: 2d2bf17a8d9d2ae45bf51f0d28b50dcc, type: 3}
+  spectator: {fileID: 21300000, guid: 5bc7cfae3ddc0be47b29bce75ca2a7d7, type: 3}
+  paused: {fileID: 21300000, guid: 794aac1d7a0463746949a1b9a80993aa, type: 3}
+  resume: {fileID: 21300000, guid: 8378bc22dff0d5e418e14d804b3b4079, type: 3}
+  exit: {fileID: 21300000, guid: 9009313831046524490d00ae6d56a3fb, type: 3}
+  congratulations: {fileID: 21300000, guid: d768d6e35682f3d43816308304fa11db, type: 3}
+  you: {fileID: 21300000, guid: c73d77843e09acd478e869dc1b09d2d2, type: 3}
+  finished: {fileID: 21300000, guid: 4e4c5b8b0c4d7f94ea19aa880846171d, type: 3}
+  first: {fileID: 21300000, guid: 397e5f90e737cc344ba9c209cd9f58c4, type: 3}
+  second: {fileID: 21300000, guid: e4ba0c903e8f78d409652576f6bb6179, type: 3}
+  third: {fileID: 21300000, guid: 7a883629671a68447976a0110b18e2ac, type: 3}
+  fourth: {fileID: 21300000, guid: 79a85338fb022ad4781f2715240c17de, type: 3}
+  leave: {fileID: 21300000, guid: b481e436df3d4ab468bbdfd2f2aaa56d, type: 3}
+  match: {fileID: 21300000, guid: ed575110b232bc54c8a2a99756d0d03d, type: 3}
+  trophy: {fileID: 21300000, guid: 0d01a958f34bc9d44aa9a1b72aa5dccc, type: 3}
+  timeIcon: {fileID: 21300000, guid: 230b6850f85ad1c40bda24f74a50481b, type: 3}
+  coinIcon: {fileID: 21300000, guid: 989d99f8998a556458336698e4446938, type: 3}
+  timeWord: {fileID: 21300000, guid: 937b0f871a04c45418d51d763721ca00, type: 3}
+  killsWord: {fileID: 21300000, guid: e631c57eeabb5aa4e9eaa9491f3922dc, type: 3}
+  coinsWord: {fileID: 21300000, guid: 27f5975a17af67e469817d5b52f38e11, type: 3}
+  exitIcon: {fileID: 21300000, guid: f81431df79ea69c409ff672039b67abb, type: 3}
+  playIcon: {fileID: 21300000, guid: 7d4a0953f59a6e347ab4126e3cfd8833, type: 3}
+  leftLaurels:
+  - {fileID: 21300000, guid: 0f27764763b5d2c42973426420815a61, type: 3}
+  - {fileID: 21300000, guid: 9536455f69f207240bcad25a3f664df4, type: 3}
+  - {fileID: 21300000, guid: 76e2fdf2b17091641bcd9e5d7a32e2e8, type: 3}
+  rightLaurels:
+  - {fileID: 21300000, guid: 8a609489b274c5d43a89b6fabb304d24, type: 3}
+  - {fileID: 21300000, guid: f98ce6a13b254f34395301be50f738c9, type: 3}
+  - {fileID: 21300000, guid: 649df2754bcc8de4b9090739c52fd4c2, type: 3}
+  podiumBanners:
+  - {fileID: 21300000, guid: f1e3d7c34b2671448ae259d50b527e70, type: 3}
+  - {fileID: 21300000, guid: acf06cc59c0ee3b4fb5864c96ce53c12, type: 3}
+  - {fileID: 21300000, guid: 9f8dcd705755fc549bc38382a5855baf, type: 3}
+  medals:
+  - {fileID: 21300000, guid: 8fd8e7f4d7c7cb0439df5686b8eba0ad, type: 3}
+  - {fileID: 21300000, guid: 1e7c99ac044dc51449cab82e02eb4f1b, type: 3}
+  - {fileID: 21300000, guid: d5e0271b68d30c2478c044f22d3635f1, type: 3}

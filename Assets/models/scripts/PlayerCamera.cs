@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+[DefaultExecutionOrder(-50)]
 public class PlayerCamera : MonoBehaviour
 {
     [Header("Target")]
@@ -17,6 +18,10 @@ public class PlayerCamera : MonoBehaviour
     [Header("Vertical Limits")]
     public float minPitch = -20f;
     public float maxPitch = 65f;
+
+    [Header("Race Look / Grenade Aim")]
+    public float raceMinPitch = -35f;
+    public float raceMaxPitch = 60f;
 
     [Header("Smoothness")]
     public float smoothSpeed = 12f;
@@ -41,6 +46,17 @@ public class PlayerCamera : MonoBehaviour
     private float yaw;
     private float pitch = 15f;
     private float followY;
+    private bool raceChase;
+    private float raceLookYaw, raceLookPitch = 12f, lastRaceLook;
+    private readonly RaycastHit[] chaseHits = new RaycastHit[16];
+    private Camera raceCamera;
+    private Rigidbody followedBody;
+    private RagdollController followedRagdoll;
+    private HitBoss.Multiplayer.Skate.SkateCombat aimingCombat;
+    private Vector3 previousTargetPosition;
+    private float baseFieldOfView, smoothedSpeed;
+
+    public float RaceSpeedEffect { get; private set; }
 
 
     void Start()
@@ -52,9 +68,93 @@ public class PlayerCamera : MonoBehaviour
     void OnEnable()
     {
         if (target != null)
+        {
             followY = target.position.y;
+            if (raceChase)
+            {
+                yaw = target.eulerAngles.y;
+                UpdateRaceChase(false);
+            }
+        }
     }
 
+    public void FollowRaceSkater(PlayerController skater)
+    {
+        if (skater == null) return;
+        raceChase = true;
+        target = skater.transform;
+        playerController = skater;
+        followedBody = skater.GetComponent<Rigidbody>();
+        followedRagdoll = skater.GetComponent<RagdollController>();
+        aimingCombat = GetComponentInParent<HitBoss.Multiplayer.Skate.SkateCombat>();
+        previousTargetPosition = target.position;
+        if (raceCamera == null && TryGetComponent(out raceCamera))
+            baseFieldOfView = raceCamera.fieldOfView;
+        yaw = target.eulerAngles.y;
+        followY = target.position.y;
+        raceLookYaw = 0;
+        raceLookPitch = 12f;
+        UpdateRaceChase(false);
+    }
+
+    void UpdateRaceChase(bool readLook = true)
+    {
+        float blend = 1f - Mathf.Exp(-smoothSpeed * Time.deltaTime);
+        yaw = Mathf.LerpAngle(yaw, target.eulerAngles.y, blend);
+        if (readLook && Cursor.lockState == CursorLockMode.Locked && Mouse.current != null)
+        {
+            Vector2 mouse = Mouse.current.delta.ReadValue();
+            if (mouse.sqrMagnitude > .01f)
+            {
+                raceLookYaw = Mathf.DeltaAngle(0, raceLookYaw + mouse.x * sensitivity);
+                raceLookPitch = Mathf.Clamp(raceLookPitch - mouse.y * sensitivity, raceMinPitch, raceMaxPitch);
+                lastRaceLook = Time.unscaledTime;
+            }
+            else if ((aimingCombat == null || !aimingCombat.IsChargingThrow) && Time.unscaledTime - lastRaceLook > 1.5f)
+            {
+                raceLookYaw = Mathf.MoveTowardsAngle(raceLookYaw, 0, 135f * Time.deltaTime);
+                raceLookPitch = Mathf.MoveTowards(raceLookPitch, 12f, 40f * Time.deltaTime);
+            }
+        }
+
+        bool followRagdoll = followedRagdoll != null && followedRagdoll.IsRagdolled && followedRagdoll.hips != null;
+        UpdateRaceSpeed(followRagdoll);
+        Vector3 lookPoint = followRagdoll ? followedRagdoll.hips.position : target.position;
+        followY = Mathf.Lerp(followY, lookPoint.y, blend);
+        followY = Mathf.Clamp(followY, lookPoint.y - .5f, lookPoint.y + .5f);
+        lookPoint.y = followY + (followRagdoll ? .25f : height + .35f);
+
+        Vector3 backwards = Quaternion.Euler(raceLookPitch, yaw + raceLookYaw, 0f) * Vector3.back;
+        float availableDistance = distance + RaceSpeedEffect * .75f;
+        int mask = collisionLayers.value == 0 ? Physics.DefaultRaycastLayers : collisionLayers.value;
+        int hitCount = Physics.SphereCastNonAlloc(lookPoint, collisionRadius, backwards, chaseHits,
+            availableDistance, mask, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < hitCount; i++)
+        {
+            var hit = chaseHits[i];
+            if (hit.collider.GetComponentInParent<PlayerController>() != null) continue;
+            availableDistance = Mathf.Min(availableDistance, Mathf.Max(minimumDistance, hit.distance - collisionOffset));
+        }
+
+        transform.SetPositionAndRotation(lookPoint + backwards * availableDistance,
+            Quaternion.LookRotation(-backwards, Vector3.up));
+    }
+
+    void UpdateRaceSpeed(bool followRagdoll)
+    {
+        float deltaTime = Mathf.Max(Time.deltaTime, .001f);
+        Vector3 displacement = target.position - previousTargetPosition;
+        previousTargetPosition = target.position;
+        Vector3 velocity = followedBody != null && !followedBody.isKinematic
+            ? followedBody.linearVelocity
+            : displacement.sqrMagnitude > 64f ? Vector3.zero : displacement / deltaTime;
+        velocity.y = 0;
+        float speed = followRagdoll ? 0f : Mathf.Min(velocity.magnitude, 48f);
+        float blend = 1f - Mathf.Exp(-5f * Time.deltaTime);
+        smoothedSpeed = Mathf.Lerp(smoothedSpeed, speed, blend);
+        RaceSpeedEffect = Mathf.InverseLerp(11f, 40f, smoothedSpeed);
+        if (raceCamera != null) raceCamera.fieldOfView = baseFieldOfView + RaceSpeedEffect * 19f;
+    }
 
     void SetupCamera()
     {
@@ -76,6 +176,12 @@ public class PlayerCamera : MonoBehaviour
     {
         if (target == null)
             return;
+
+        if (raceChase)
+        {
+            UpdateRaceChase();
+            return;
+        }
 
         if (playerController == null)
             playerController = target.GetComponent<PlayerController>();

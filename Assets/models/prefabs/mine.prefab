@@ -9,8 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1615082226770554387}
-  - component: {fileID: 5305009210907986709}
-  - component: {fileID: -4861107228588895528}
   - component: {fileID: -3126553420915226992}
   - component: {fileID: 8454339105747541938}
   m_Layer: 0
@@ -36,41 +34,6 @@ Transform:
   - {fileID: 8894720707467896755}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5305009210907986709
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6322852915340389648}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a79e83fb38aef324b96da221aaa45128, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ThrowablePickup
-  type: 2
---- !u!114 &-4861107228588895528
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6322852915340389648}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c85b59bc81d836f4681b2eb52d283d8e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Mine
-  armDelay: 1
-  explosionRadius: 3
-  damage: 3
-  positionOffset: {x: 0, y: -0.9, z: 0}
-  rotationOffset: {x: 0, y: 0, z: 0}
-  ragdollTime: 2.5
-  knockbackForce: 200
-  upwardForce: 100
-  explosionEffectPrefab: {fileID: 0}
-  lifeTime: 15
 --- !u!54 &-3126553420915226992
 Rigidbody:
   m_ObjectHideFlags: 0

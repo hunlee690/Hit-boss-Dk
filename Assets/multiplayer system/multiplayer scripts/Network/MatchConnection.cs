@@ -18,7 +18,7 @@ namespace HitBoss.Multiplayer
         GameObject menuRig;
         PlayerCustomizationManager menuCustomization;
         public NetworkLoadout CurrentLoadout { get; private set; }
-        bool callbacksBound, returning, quitting;
+        bool callbacksBound, returning, quitting, disconnectHandling, matchSpawned;
         public void BindMenu(GameObject rig)
         {
             // Scene synchronization may recreate the menu; keep only its current preview rig.
@@ -33,6 +33,7 @@ namespace HitBoss.Multiplayer
             SceneManager.sceneLoaded += SceneLoaded;
             network.OnClientDisconnectCallback += ClientDisconnected;
             network.OnServerStarted += BindSceneCallbacks;
+            network.OnClientStopped += ClientStopped;
         }
         void BindSceneCallbacks()
         {
@@ -62,6 +63,7 @@ namespace HitBoss.Multiplayer
         public void LoadMode(MultiplayerMode mode)
         {
             if (!network.IsHost) throw new InvalidOperationException("Only the host can start a match.");
+            matchSpawned = false;
             BindSceneCallbacks();
             if (!Application.CanStreamedLevelBeLoaded(mode.sceneName)) throw new InvalidOperationException("This mode's scene is missing from the build.");
             var status = network.SceneManager.LoadScene(mode.sceneName, LoadSceneMode.Single);
@@ -73,14 +75,13 @@ namespace HitBoss.Multiplayer
             if (menuRig != null) { menuRig.SetActive(false); Destroy(menuRig); menuRig = null; }
             if (!MapArenaSetup.ActivateMap(RoomManager.Instance.MapId))
                 Debug.LogWarning("[Maps] No arena setup was found in " + scene.name + ".");
-            // These managers run local-only AI/match loops. Online mode rules take their place.
-            foreach (var manager in FindObjectsByType<ModeManagerBase>(FindObjectsSortMode.None)) manager.enabled = false;
             var definition = RoomManager.Instance.Mode;
             if (definition != null && definition.rulesPrefab != null) ActiveRules = Instantiate(definition.rulesPrefab);
         }
         void LoadCompleted(string sceneName, LoadSceneMode mode, List<ulong> completed, List<ulong> timedOut)
         {
-            if (!network.IsHost || sceneName == menuScene || ActiveRules == null) return;
+            if (!network.IsHost || sceneName == menuScene || ActiveRules == null || matchSpawned) return;
+            matchSpawned = true;
             if (timedOut.Count > 0) { RoomManager.Instance.SetStatus("Some players failed to load the scene."); }
             for (var i = 0; i < completed.Count; i++)
             {
@@ -89,7 +90,7 @@ namespace HitBoss.Multiplayer
                 var player = Instantiate(playerPrefab, pose.position, pose.rotation);
                 player.NetworkObject.SpawnAsPlayerObject(completed[i], true);
             }
-            var botCount = RoomManager.Instance.BotCount;
+            var botCount = Mathf.Clamp(RoomManager.Instance.BotCount, 0, RoomManager.Instance.Mode.maxPlayers - completed.Count);
             // Bots never become the host's PlayerObject and never own a camera or input.
             for (int i = 0; i < botCount; i++)
             {
@@ -102,13 +103,21 @@ namespace HitBoss.Multiplayer
         }
         async void ClientDisconnected(ulong id)
         {
-            if (quitting || returning || RoomManager.Instance?.Room == null) return;
-            if (!network.IsServer && id == network.LocalClientId)
-            { await RoomManager.Instance.HandleDisconnectAsync(); }
+            if (network != null && !network.IsServer && id == network.LocalClientId) await HandleLostHost();
+        }
+        async void ClientStopped(bool wasHost) { if (!wasHost) await HandleLostHost(); }
+        async Task HandleLostHost()
+        {
+            if (quitting || returning || disconnectHandling || RoomManager.Instance?.Room == null) return;
+            disconnectHandling = true;
+            try { await RoomManager.Instance.HandleDisconnectAsync(); }
+            catch (Exception e) { Debug.LogWarning("[Rooms] Disconnected: " + e.Message); await ReturnToMenuAsync(); }
+            finally { disconnectHandling = false; }
         }
         public async Task ReturnToMenuAsync()
         {
-            returning = true;
+            if(returning || quitting)return;
+            returning = true; matchSpawned = false;
             if (ActiveRules != null && network.IsServer) ActiveRules.EndServerMatch();
             if (callbacksBound && network.SceneManager != null) network.SceneManager.OnLoadEventCompleted -= LoadCompleted;
             callbacksBound = false;
@@ -127,6 +136,7 @@ namespace HitBoss.Multiplayer
             SceneManager.sceneLoaded -= SceneLoaded;
             if (network != null) network.OnClientDisconnectCallback -= ClientDisconnected;
             if (network != null) network.OnServerStarted -= BindSceneCallbacks;
+            if (network != null) network.OnClientStopped -= ClientStopped;
             if (Instance == this) Instance = null;
         }
     }

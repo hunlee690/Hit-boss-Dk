@@ -13,8 +13,19 @@ public sealed class MapArenaSetup : MonoBehaviour
     [Header("Player Spawn Points")]
     public Transform[] playerSpawnPoints;
 
+    [Header("Mystery Box Reward Chances")]
+    public MysteryBoxRewards boxRewards;
+    [Header("Race Track Surface")]
+    public MeshCollider raceSurface;
+
     [Header("Arena Pickup Points")]
     public Transform[] pickupSpawnPoints;
+
+    [Header("Lap Race")]
+    [Tooltip("Ordered centerline points. Point 0 is the start line; the last point loops back to it.")]
+    public Transform[] raceRoute;
+    [Min(2)] public float raceTrackHalfWidth = 16;
+    [Min(1)] public int lapsToFinish = 3;
 
     public string EffectiveMapId =>
         string.IsNullOrWhiteSpace(mapId)
@@ -29,43 +40,6 @@ public sealed class MapArenaSetup : MonoBehaviour
             while (root.parent != null && root.parent.parent != null)
                 root = root.parent;
             return root.gameObject;
-        }
-    }
-
-    void Awake()
-    {
-        Apply();
-    }
-
-    void OnEnable()
-    {
-        Apply();
-    }
-
-    public void Apply()
-    {
-        if (!isActiveAndEnabled)
-            return;
-
-        GameModeManager localMatch =
-            FindFirstObjectByType<GameModeManager>(FindObjectsInactive.Include);
-
-        if (localMatch != null)
-            localMatch.spawnPoints = playerSpawnPoints;
-
-        ArenaPickupSpawner localPickups =
-            FindFirstObjectByType<ArenaPickupSpawner>(FindObjectsInactive.Include);
-
-        if (localPickups != null)
-            localPickups.spawnPoints = pickupSpawnPoints;
-
-        SkateArena onlineArena =
-            FindFirstObjectByType<SkateArena>(FindObjectsInactive.Include);
-
-        if (onlineArena != null)
-        {
-            onlineArena.spawnPoints = playerSpawnPoints;
-            onlineArena.pickupPoints = pickupSpawnPoints;
         }
     }
 
@@ -89,7 +63,6 @@ public sealed class MapArenaSetup : MonoBehaviour
         foreach (MapArenaSetup setup in setups)
             setup.ArenaRoot.SetActive(setup == selected);
 
-        selected.Apply();
         Debug.Log("[Maps] Loaded " +
             (string.IsNullOrWhiteSpace(selected.displayName)
                 ? selected.EffectiveMapId

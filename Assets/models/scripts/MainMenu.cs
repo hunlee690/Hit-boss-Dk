@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,8 +10,8 @@ using TMPro;
 [DefaultExecutionOrder(-50)]
 public class MainMenu : MonoBehaviour
 {
-    public GameObject mainMenu, customizeMenu, mapSelectionMenu, shopMenu, gamePassMenu, spinMenu, settingsMenu;
-    public Button customizeButton, playButton, customizeBackButton, mapSelectionBackButton;
+    public GameObject mainMenu, customizeMenu, shopMenu, gamePassMenu, spinMenu, settingsMenu;
+    public Button customizeButton, playButton, customizeBackButton;
     public Button shopButton, coinShopButton, gemShopButton, gamePassButton, dailySpinButton, gemSpinButton, settingsButton;
     public Button shopBackButton, gamePassBackButton, spinBackButton, settingsBackButton;
     public Button[] shopCategoryButtons;
@@ -31,9 +30,6 @@ public class MainMenu : MonoBehaviour
     public Transform playerModel;
     public float rotateSpeed = .25f;
 
-    TMP_Text mapMenuTitle;
-    readonly List<Button> mapButtons = new List<Button>();
-    MultiplayerMap[] shownMaps = System.Array.Empty<MultiplayerMap>();
     bool spinOpenedFromShop;
 
     void Awake()
@@ -55,12 +51,10 @@ public class MainMenu : MonoBehaviour
 
     void Start()
     {
-        BuildMapMenu();
         if (customizationManager != null) customizationManager.InitializeCustomization();
         if (customizeButton != null) customizeButton.onClick.AddListener(OpenCustomization);
         if (customizeBackButton != null) customizeBackButton.onClick.AddListener(OpenMainMenu);
-        if (playButton != null) playButton.onClick.AddListener(OpenMapMenu);
-        if (mapSelectionBackButton != null) mapSelectionBackButton.onClick.AddListener(OpenMainMenu);
+        if (playButton != null) playButton.onClick.AddListener(StartOnlineMatch);
         Bind(shopButton, OpenShop); Bind(coinShopButton, OpenShop); Bind(gemShopButton, OpenShop);
         Bind(gamePassButton, OpenGamePass); Bind(dailySpinButton, () => OpenSpin("DAILY SPIN"));
         Bind(gemSpinButton, () => OpenSpin("FREE GEM SPIN")); Bind(settingsButton, OpenSettings);
@@ -108,7 +102,6 @@ public class MainMenu : MonoBehaviour
         if (closeRoomUI && roomMenuController != null) roomMenuController.HideRoomUI();
         if (mainMenu != null) mainMenu.SetActive(menu == mainMenu);
         if (customizeMenu != null) customizeMenu.SetActive(menu == customizeMenu);
-        if (mapSelectionMenu != null) mapSelectionMenu.SetActive(menu == mapSelectionMenu);
         if (shopMenu != null) shopMenu.SetActive(menu == shopMenu);
         if (gamePassMenu != null) gamePassMenu.SetActive(menu == gamePassMenu);
         if (spinMenu != null) spinMenu.SetActive(menu == spinMenu);
@@ -175,22 +168,8 @@ public class MainMenu : MonoBehaviour
             qualityLabel.text = QualitySettings.names[QualitySettings.GetQualityLevel()];
     }
 
-    void OpenMapMenu()
+    void StartOnlineMatch()
     {
-        var manager = RoomManager.Instance;
-        shownMaps = manager != null && manager.modes != null && manager.modes.Length > 0
-            ? manager.MapsForMode(0)
-            : System.Array.Empty<MultiplayerMap>();
-
-        RefreshMapMenu();
-        SetMenu(mapSelectionMenu);
-    }
-
-    void PlayMap(MultiplayerMap map)
-    {
-        if (map == null)
-            return;
-
         var rooms = roomMenuController != null
             ? roomMenuController
             : FindFirstObjectByType<RoomMenuController>();
@@ -204,115 +183,9 @@ public class MainMenu : MonoBehaviour
 
         var mode = RoomManager.Instance?.modes?.FirstOrDefault(value => value != null);
         if (rooms != null && mode != null)
-            rooms.FindOnlineMode(mode.sceneName, map.mapId);
+            rooms.FindOnlineMode(mode.sceneName);
         else
             RoomManager.Instance?.SetStatus("Matchmaking menu is not ready yet.");
-    }
-
-    void BuildMapMenu()
-    {
-        if (mapSelectionMenu == null)
-            return;
-
-        mapSelectionMenu.name = "Map Menu";
-
-        Transform panel = mapSelectionMenu.transform.Find("Panel");
-        if (panel == null)
-            panel = mapSelectionMenu.transform;
-
-        mapButtons.AddRange(panel.GetComponentsInChildren<Button>(true));
-        if (mapButtons.Count == 0)
-            return;
-
-        int mapCapacity = RoomManager.Instance != null && RoomManager.Instance.maps != null
-            ? Mathf.Max(1, RoomManager.Instance.maps.Length)
-            : 5;
-
-        while (mapButtons.Count < mapCapacity)
-        {
-            Button clone = Instantiate(mapButtons[0], mapButtons[0].transform.parent);
-            clone.name = "Map " + (mapButtons.Count + 1);
-            mapButtons.Add(clone);
-        }
-
-        for (int i = 0; i < mapButtons.Count; i++)
-        {
-            bool used = i < mapCapacity;
-            mapButtons[i].gameObject.SetActive(used);
-            if (!used) continue;
-
-            mapButtons[i].onClick.RemoveAllListeners();
-            RectTransform rect = mapButtons[i].transform as RectTransform;
-            if (rect != null)
-            {
-                rect.anchorMin = rect.anchorMax = new Vector2(.5f, .5f);
-                rect.sizeDelta = new Vector2(260, 145);
-                int columns = 3;
-                int row = i / columns;
-                int firstIndex = row * columns;
-                int rowCount = Mathf.Min(columns, mapCapacity - firstIndex);
-                float x = (i - firstIndex - (rowCount - 1) * .5f) * 300f;
-                float y = row == 0 ? 92f : -92f;
-                rect.anchoredPosition = new Vector2(x, y);
-            }
-        }
-
-        Button back = mapSelectionMenu.GetComponentsInChildren<Button>(true)
-            .FirstOrDefault(button => !button.transform.IsChildOf(panel));
-        if (back != null)
-        {
-            back.onClick.RemoveAllListeners();
-            back.onClick.AddListener(OpenMainMenu);
-        }
-
-        TMP_Text source = mapButtons[0].GetComponentInChildren<TMP_Text>(true);
-        if (source != null)
-        {
-            mapMenuTitle = Instantiate(source, mapSelectionMenu.transform);
-            mapMenuTitle.name = "Map Menu Title";
-            mapMenuTitle.text = "SELECT MAP";
-            mapMenuTitle.alignment = TextAlignmentOptions.Center;
-            mapMenuTitle.fontSize = 30;
-            RectTransform titleRect = mapMenuTitle.rectTransform;
-            titleRect.anchorMin = titleRect.anchorMax = new Vector2(.5f, .5f);
-            titleRect.pivot = new Vector2(.5f, .5f);
-            titleRect.anchoredPosition = new Vector2(0, 225);
-            titleRect.sizeDelta = new Vector2(620, 55);
-        }
-
-        mapSelectionMenu.SetActive(false);
-    }
-
-    void RefreshMapMenu()
-    {
-        if (mapSelectionMenu == null)
-            BuildMapMenu();
-
-        if (mapMenuTitle != null)
-        {
-            mapMenuTitle.text = shownMaps.Length == 0
-                ? "NO MAPS AVAILABLE"
-                : "SELECT MAP";
-        }
-
-        for (int i = 0; i < mapButtons.Count; i++)
-        {
-            bool visible = i < shownMaps.Length;
-            mapButtons[i].gameObject.SetActive(visible);
-            if (!visible) continue;
-
-            MultiplayerMap map = shownMaps[i];
-            TMP_Text label = mapButtons[i].GetComponentInChildren<TMP_Text>(true);
-            if (label != null)
-                label.text = map.displayName.ToUpperInvariant();
-
-            Image image = mapButtons[i].GetComponent<Image>();
-            if (image != null && map.preview != null)
-                image.sprite = map.preview;
-
-            mapButtons[i].onClick.RemoveAllListeners();
-            mapButtons[i].onClick.AddListener(() => PlayMap(map));
-        }
     }
 
     void Update()

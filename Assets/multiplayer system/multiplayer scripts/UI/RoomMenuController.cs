@@ -180,12 +180,8 @@ namespace HitBoss.Multiplayer
 
             var selected = manager.modes.Length > 0 ? manager.modes[Mathf.Clamp(selectedMode, 0, manager.modes.Length - 1)] : null;
 
-            MultiplayerMap selectedMap = inRoom
-                ? manager.Map
-                : manager.MapsForMode(selectedMode).FirstOrDefault();
             modeText.text = selected != null
-                ? selected.displayName + "  •  " + selected.minPlayers + "–" + (inRoom ? Math.Min(selected.maxPlayers, room.MaxPlayers) : selected.maxPlayers) + " players" +
-                  (selectedMap != null ? "\nMAP: " + selectedMap.displayName : "")
+                ? selected.displayName + "  •  " + selected.minPlayers + "–" + (inRoom ? Math.Min(selected.maxPlayers, room.MaxPlayers) : selected.maxPlayers) + " players"
                 : "No modes configured";
 
             statusText.text = manager.Status;

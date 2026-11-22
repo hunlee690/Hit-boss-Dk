@@ -12,11 +12,8 @@ public class PauseMenu : MonoBehaviour
     public string playerTag = "Player", cameraTag = "MainCamera", mainMenuScene = "main menu";
     PlayerController playerController;
     PlayerCamera playerCamera;
-    CombatController combat;
-    ThrowableInventory inventory;
     NetworkPlayer onlinePlayer;
-    bool paused, quitting, movementEnabled, combatEnabled, inventoryEnabled, resultWasOpen;
-    float previousTimeScale = 1;
+    bool paused, quitting, resultWasOpen;
     public bool IsPaused => paused;
 
     void Awake()
@@ -47,19 +44,8 @@ public class PauseMenu : MonoBehaviour
     void FindPlayer()
     {
         onlinePlayer = NetworkManager.Singleton?.LocalClient?.PlayerObject?.GetComponent<NetworkPlayer>();
-        if (RoomManager.Instance?.Room != null)
-        {
-            playerController = onlinePlayer != null ? onlinePlayer.movement : null;
-            playerCamera = onlinePlayer != null ? onlinePlayer.playerCamera : null;
-        }
-        else
-        {
-            var player = GameObject.FindGameObjectWithTag(playerTag);
-            playerController = player != null ? player.GetComponentInChildren<PlayerController>(true) : null;
-            playerCamera = playerController != null ? playerController.transform.root.GetComponentInChildren<PlayerCamera>(true) : null;
-        }
-        combat = playerController != null ? playerController.GetComponent<CombatController>() : null;
-        inventory = playerController != null ? playerController.GetComponent<ThrowableInventory>() : null;
+        playerController = onlinePlayer != null ? onlinePlayer.movement : null;
+        playerCamera = onlinePlayer != null ? onlinePlayer.playerCamera : null;
     }
 
     public void PauseMatch()
@@ -73,18 +59,6 @@ public class PauseMenu : MonoBehaviour
         if (pausePanel != null) { pausePanel.SetActive(true); pausePanel.transform.SetAsLastSibling(); }
 
         if (onlinePlayer != null) onlinePlayer.SetPaused(true);
-        else
-        {
-            previousTimeScale = Time.timeScale;
-            Time.timeScale = 0;
-            movementEnabled = playerController != null && playerController.enabled;
-            combatEnabled = combat != null && combat.enabled;
-            inventoryEnabled = inventory != null && inventory.enabled;
-            if (movementEnabled) { playerController.StopImmediately(); playerController.enabled = false; }
-            if (combat != null) combat.enabled = false;
-            if (inventory != null) inventory.enabled = false;
-            if (playerCamera != null) playerCamera.enabled = false;
-        }
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -97,26 +71,17 @@ public class PauseMenu : MonoBehaviour
         if (resultScreen != null && resultWasOpen) resultScreen.SetActive(true);
 
         if (onlinePlayer != null) onlinePlayer.SetPaused(false);
-        else
-        {
-            Time.timeScale = previousTimeScale;
-            if (playerController != null) playerController.enabled = movementEnabled;
-            if (combat != null) combat.enabled = combatEnabled;
-            if (inventory != null) inventory.enabled = inventoryEnabled;
-            if (playerCamera != null) playerCamera.enabled = true;
-        }
 
         paused = false;
+        Cursor.lockState = resultWasOpen ? CursorLockMode.None : CursorLockMode.Locked;
+        Cursor.visible = resultWasOpen;
         resultWasOpen = false;
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
     }
 
     public async void QuitMatch()
     {
         if (quitting) return;
         quitting = true;
-        if (onlinePlayer == null) Time.timeScale = previousTimeScale;
 
         if (RoomManager.Instance?.Room != null)
         {
@@ -139,9 +104,6 @@ public class PauseMenu : MonoBehaviour
         SceneManager.LoadScene(mainMenuScene);
     }
 
-    void OnDestroy()
-    {
-        if (paused && onlinePlayer == null) Time.timeScale = previousTimeScale;
-    }
+
 
 }

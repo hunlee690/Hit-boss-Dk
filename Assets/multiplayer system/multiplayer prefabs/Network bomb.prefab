@@ -127,12 +127,12 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   kind: 3
   damage: 3
-  restoreAmount: 1
   radius: 3
-  force: 300
-  lift: 100
-  downTime: 2.5
+  force: 8
+  lift: 1.8
+  downTime: 1.2
   explosionEffect: {fileID: 0}
+  visualPrefab: {fileID: 0}
 --- !u!114 &5721966196214835124
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -38,20 +38,20 @@ public class RagdollController : MonoBehaviour
     Quaternion[] targetRotations;
 
     PlayerController playerController;
-    SimpleAIPlayerBehaviour aiBehaviour;
-    CombatController combatController;
-    ThrowableInventory throwableInventory;
-    CombatStats stats;
 
     bool playerWasEnabled;
-    bool aiWasEnabled;
-    bool combatWasEnabled;
-    bool throwableWasEnabled;
     bool ragdolled;
     bool permanentRagdoll;
     Coroutine recoverRoutine;
+    Vector3 sampledVelocity, sampledAngularVelocity;
+    Vector3 previousPosition, inheritedVelocity, inheritedAngularVelocity, launchCenter;
+    Quaternion previousRotation;
 
     public bool IsRagdolled => ragdolled;
+    public Vector3 MovementVelocity => rootRigidbody != null && !rootRigidbody.isKinematic
+        ? rootRigidbody.linearVelocity : sampledVelocity;
+    public Vector3 MovementAngularVelocity => rootRigidbody != null && !rootRigidbody.isKinematic
+        ? rootRigidbody.angularVelocity : sampledAngularVelocity;
 
     void Awake()
     {
@@ -65,10 +65,6 @@ public class RagdollController : MonoBehaviour
             rootCollider = GetComponent<Collider>();
 
         playerController = GetComponent<PlayerController>();
-        aiBehaviour = GetComponent<SimpleAIPlayerBehaviour>();
-        combatController = GetComponent<CombatController>();
-        throwableInventory = GetComponent<ThrowableInventory>();
-        stats = GetComponent<CombatStats>();
 
         ragdollBodies = GetComponentsInChildren<Rigidbody>(true);
         ragdollColliders = GetComponentsInChildren<Collider>(true);
@@ -82,6 +78,33 @@ public class RagdollController : MonoBehaviour
             IgnoreRagdollSelfCollisions();
 
         DisableRagdollPhysics();
+        previousPosition = transform.position;
+        previousRotation = transform.rotation;
+    }
+
+    void FixedUpdate()
+    {
+        if (!ragdolled)
+        {
+            float deltaTime = Mathf.Max(Time.fixedDeltaTime, .001f);
+            Vector3 moved = transform.position - previousPosition;
+            if (moved.sqrMagnitude > 64f)
+            {
+                sampledVelocity = Vector3.zero;
+                sampledAngularVelocity = Vector3.zero;
+            }
+            else
+            {
+                sampledVelocity = Vector3.Lerp(sampledVelocity, moved / deltaTime, .65f);
+                Quaternion turn = transform.rotation * Quaternion.Inverse(previousRotation);
+                turn.ToAngleAxis(out float angle, out Vector3 axis);
+                if (angle > 180f) angle -= 360f;
+                sampledAngularVelocity = Mathf.Abs(angle) < .001f
+                    ? Vector3.zero : axis * (angle * Mathf.Deg2Rad / deltaTime);
+            }
+        }
+        previousPosition = transform.position;
+        previousRotation = transform.rotation;
     }
 
     void BuildRecoveryBones()
@@ -116,6 +139,10 @@ public class RagdollController : MonoBehaviour
 
         if (!ragdolled)
         {
+            Vector3 velocity = MovementVelocity;
+            Vector3 angularVelocity = MovementAngularVelocity;
+            launchCenter = rootRigidbody != null ? rootRigidbody.worldCenterOfMass : transform.position;
+            inheritedVelocity = inheritedAngularVelocity = Vector3.zero;
             SaveControlStates();
             DisableControl();
             ragdolled = true;
@@ -124,6 +151,7 @@ public class RagdollController : MonoBehaviour
                 animator.enabled = false;
 
             EnableRagdollPhysics();
+            InheritMomentum(velocity, angularVelocity);
         }
 
         if (stayRagdolled)
@@ -137,6 +165,22 @@ public class RagdollController : MonoBehaviour
 
         if (!permanentRagdoll)
             recoverRoutine = StartCoroutine(RecoverAfter(duration));
+    }
+
+    public void InheritMomentum(Vector3 velocity, Vector3 angularVelocity)
+    {
+        if (!ragdolled) return;
+        // Correct only the inherited portion, preserving gravity, collisions and hit impulses.
+        Vector3 linearChange = velocity - inheritedVelocity;
+        Vector3 angularChange = angularVelocity - inheritedAngularVelocity;
+        foreach (Rigidbody body in ragdollBodies)
+        {
+            if (body == null || body == rootRigidbody || body.isKinematic) continue;
+            body.linearVelocity += linearChange + Vector3.Cross(angularChange, body.worldCenterOfMass - launchCenter);
+            body.angularVelocity += angularChange;
+        }
+        inheritedVelocity = velocity;
+        inheritedAngularVelocity = angularVelocity;
     }
 
     public void ApplyForceFromPoint(Vector3 sourcePosition, float horizontalForce, float upwardForce)
@@ -466,14 +510,8 @@ public class RagdollController : MonoBehaviour
         if (playerController != null)
             playerWasEnabled = playerController.enabled;
 
-        if (aiBehaviour != null)
-            aiWasEnabled = aiBehaviour.enabled;
 
-        if (combatController != null)
-            combatWasEnabled = combatController.enabled;
 
-        if (throwableInventory != null)
-            throwableWasEnabled = throwableInventory.enabled;
     }
 
     void DisableControl()
@@ -484,32 +522,18 @@ public class RagdollController : MonoBehaviour
             playerController.enabled = false;
         }
 
-        if (aiBehaviour != null)
-            aiBehaviour.enabled = false;
 
-        if (combatController != null)
-            combatController.enabled = false;
 
-        if (throwableInventory != null)
-            throwableInventory.enabled = false;
     }
 
     void RestoreControlStates()
     {
-        if (stats != null && stats.IsDead)
-            return;
 
         if (playerController != null)
             playerController.enabled = playerWasEnabled;
 
-        if (aiBehaviour != null)
-            aiBehaviour.enabled = aiWasEnabled;
 
-        if (combatController != null)
-            combatController.enabled = combatWasEnabled;
 
-        if (throwableInventory != null)
-            throwableInventory.enabled = throwableWasEnabled;
     }
 
     void EnableRagdollPhysics()
