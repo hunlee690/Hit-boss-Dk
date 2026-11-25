@@ -17,6 +17,7 @@ namespace HitBoss.Social
         public TMP_Text ownXp;
         public Image ownProgress;
         public TMP_InputField existingNameInput;
+        public Button editExistingNameButton;
         public Button saveExistingNameButton;
         [Header("Social panel")]
         public TMP_Text statusText;
@@ -45,6 +46,7 @@ namespace HitBoss.Social
         IReadOnlyList<SocialPlayer> searchResults = Array.Empty<SocialPlayer>();
         string viewedId;
         bool busy;
+        bool editingExistingName;
         int searchVersion;
         int visitVersion;
 
@@ -62,11 +64,13 @@ namespace HitBoss.Social
             refreshButton.onClick.AddListener(() => Run(async () => { if (online.Friends?.Ready == true) await online.Friends.RefreshAsync(); else await online.ConnectAsync(); }));
             closeProfileButton.onClick.AddListener(() => { visitVersion++; profileWindow.SetActive(false); });
             renameButton.onClick.AddListener(() => Rename(renameInput.text));
-            if (saveExistingNameButton != null) saveExistingNameButton.onClick.AddListener(() => Rename(existingNameInput.text));
+            if (editExistingNameButton != null) editExistingNameButton.onClick.AddListener(() => SetExistingNameEditing(true));
+            if (saveExistingNameButton != null) saveExistingNameButton.onClick.AddListener(SaveExistingName);
+            SetExistingNameEditing(false);
             Refresh();
         }
         void OnEnable() { if (online != null) Refresh(); }
-        void OnDisable() { searchVersion++; visitVersion++; if (profileWindow != null) profileWindow.SetActive(false); }
+        void OnDisable() { searchVersion++; visitVersion++; SetExistingNameEditing(false); if (profileWindow != null) profileWindow.SetActive(false); }
         void OnDestroy() { if (online != null) online.Changed -= Refresh; }
         void Select(SocialList list) { searchVersion++; selected = list; Refresh(); }
 
@@ -80,6 +84,14 @@ namespace HitBoss.Social
             ownXp.text = profile != null ? $"{profile.XpIntoLevel} / {profile.XpToNextLevel} XP" : "Guest account";
             ownProgress.fillAmount = profile?.Progress ?? 0;
             ownProfileButton.interactable = profile != null;
+            if (ownName != null) ownName.gameObject.SetActive(!editingExistingName);
+            if (editExistingNameButton != null)
+            {
+                editExistingNameButton.gameObject.SetActive(!editingExistingName);
+                editExistingNameButton.interactable = profile != null && !busy;
+            }
+            if (existingNameInput != null) existingNameInput.gameObject.SetActive(editingExistingName);
+            if (saveExistingNameButton != null) saveExistingNameButton.gameObject.SetActive(editingExistingName);
             if (existingNameInput != null && profile != null && !existingNameInput.isFocused)
                 existingNameInput.SetTextWithoutNotify(UnityProfileService.BaseName(profile.username));
             bool connected = online.Friends?.Ready == true;
@@ -120,6 +132,28 @@ namespace HitBoss.Social
                 row.secondaryButton.interactable = !busy;
             }
             if (profileWindow.activeSelf && viewedId == online.Account?.PlayerId && profile != null) ShowProfile(profile, true);
+        }
+        void SetExistingNameEditing(bool editing)
+        {
+            editingExistingName = editing && online?.Profiles?.Current != null;
+            if (ownName != null) ownName.gameObject.SetActive(!editingExistingName);
+            if (editExistingNameButton != null) editExistingNameButton.gameObject.SetActive(!editingExistingName);
+            if (existingNameInput != null) existingNameInput.gameObject.SetActive(editingExistingName);
+            if (saveExistingNameButton != null) saveExistingNameButton.gameObject.SetActive(editingExistingName);
+            if (editingExistingName && existingNameInput != null)
+            {
+                existingNameInput.SetTextWithoutNotify(UnityProfileService.BaseName(online.Profiles.Current.username));
+                existingNameInput.Select();
+                existingNameInput.ActivateInputField();
+            }
+        }
+        async void SaveExistingName()
+        {
+            if (!editingExistingName || busy || existingNameInput == null) return;
+            string name = existingNameInput.text;
+            await RunAsync(() => online.Profiles.RenameAsync(name));
+            editingExistingName = false;
+            Refresh();
         }
 
         async void Search()

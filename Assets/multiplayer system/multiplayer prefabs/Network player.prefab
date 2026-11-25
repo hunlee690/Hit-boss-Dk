@@ -1449,7 +1449,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 4040254205
+  GlobalObjectIdHash: 1181376857
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -1478,7 +1478,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HitBoss.Multiplayer.NetworkPlayer
   ShowTopMostFoldoutHeaderGroup: 1
   movement: {fileID: 5674868521609799909}
-  coopMovement: {fileID: 5881560308184974043}
   playerCamera: {fileID: 1031929340156051205}
   participant: {fileID: 7009891744376421725}
   appearance: {fileID: 2582864889987157949}
@@ -1705,12 +1704,9 @@ GameObject:
   - component: {fileID: 5036637998405760351}
   - component: {fileID: 5674868521609799909}
   - component: {fileID: 7009891744376421725}
-  - component: {fileID: 1013219027378598514}
-  - component: {fileID: 7990014476403455553}
-  - component: {fileID: 3123181482987757816}
   - component: {fileID: 1284531314580901289}
-  - component: {fileID: 5881560308184974043}
   - component: {fileID: 3686961045493525696}
+  - component: {fileID: 5540265687527682894}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1799,19 +1795,22 @@ MonoBehaviour:
   moveSpeed: 5
   moveSmoothTime: 0.3
   rotationSmoothTime: 0.2
-  skateForwardSpeed: 8
-  skateReverseSpeed: 4
-  skateAcceleration: 4
+  skateForwardSpeed: 15
+  skateReverseSpeed: 7.5
+  skateAcceleration: 16
   skateBrakeSpeed: 6
   skateTurnSpeed: 100
-  skateTurnSmooth: 6
+  skateTurnSmooth: 8
+  steeringReturnSpeed: 14
+  steeringPrecision: 1.25
+  bankTurnMultiplier: 1.25
+  skateGroundGrip: 2.5
   skateMesh: {fileID: 7460049352055835999}
   startInSkateMode: 0
   skateHeightTarget: {fileID: 0}
   capsuleCollider: {fileID: 0}
   skateHeightOffset: 0.25
   jumpHeight: 1.5
-  jumpDuration: 0.4
   jumpBuildUpTime: 0.1
   animator: {fileID: 7890507593243985739}
   runAnimationSpeed: 1.3
@@ -1821,7 +1820,7 @@ MonoBehaviour:
   jumpState: jump
   normalMovementState: Blend Tree
   skateMovementState: Blend skate Tree
-  attackDuration: 0.8
+  attackDuration: 0.65
   attackIdleState: idle
   throwDuration: 0.8
   throwBlendTime: 0.15
@@ -1847,71 +1846,6 @@ MonoBehaviour:
   kills: 0
   deaths: 0
   visualRoot: {fileID: 0}
---- !u!114 &1013219027378598514
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3399289482480405679}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0c8045d040834ab4d97900bac3540b24, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CombatStats
-  maxHealth: 3
-  maxStamina: 3
---- !u!114 &7990014476403455553
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3399289482480405679}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7821a81ba999ea64099a46b4480a4623, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CombatController
-  stats: {fileID: 1013219027378598514}
-  playerController: {fileID: 5674868521609799909}
-  slideStaminaCost: 2
-  slideDamage: 1
-  slideRagdollTime: 2
-  slideForce: 2.5
-  slideUpwardForce: 0.2
-  punchStaminaCost: 3
-  punchDamage: 3
-  punchRagdollTime: 1.25
-  punchForce: 4.5
-  punchUpwardForce: 0.5
---- !u!114 &3123181482987757816
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3399289482480405679}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4fb1945197d1f3e429b1dc8bb9d36a45, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ThrowableInventory
-  ShowTopMostFoldoutHeaderGroup: 1
-  playerController: {fileID: 5674868521609799909}
-  ownerStats: {fileID: 1013219027378598514}
-  bombPrefab: {fileID: 6322852915340389648, guid: 818b76f248b020546ba60ed43ea59dd2, type: 3}
-  minePrefab: {fileID: 6322852915340389648, guid: ade88653542f6824387798a7da345c09, type: 3}
-  throwPoint: {fileID: 1114749276601652738}
-  throwDirectionSource: {fileID: 7247696163974133366}
-  bombForwardSpeed: 12
-  bombUpwardSpeed: 4
-  minesPerPickup: 3
-  minePlaceDistance: 1
-  mineRayHeight: 2
-  groundLayers:
-    serializedVersion: 2
-    m_Bits: 0
 --- !u!114 &1284531314580901289
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1936,30 +1870,6 @@ MonoBehaviour:
   recoveryGroundOffset: 0.05
   recoveryBlendTime: 0.35
   ignoreSelfCollisions: 1
---- !u!114 &5881560308184974043
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3399289482480405679}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1fbfb3127ca97e9438f164d894b9375f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CoopPlayerController
-  moveSpeed: 5
-  moveSmoothTime: 0.12
-  rotationSmoothTime: 0.12
-  jumpHeight: 1.5
-  jumpDuration: 0.4
-  jumpBuildUp: 0.1
-  rb: {fileID: 1719139788668811495}
-  animator: {fileID: 7890507593243985739}
-  cameraTransform: {fileID: 988558385246031918}
-  visualModel: {fileID: 1375139801278413523}
-  visualYawOffset: 180
-  runAnimationSpeed: 1.2
 --- !u!114 &3686961045493525696
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2006,6 +1916,33 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &5540265687527682894
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3399289482480405679}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cb6643da026a674eb927659b29be42f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HitBoss.Multiplayer.Skate.SkatePlayerSettings
+  maxHealth: 3
+  slideDamage: 1
+  punchDamage: 3
+  slideRagdollTime: 0.8
+  slideForce: 2.5
+  slideUpwardForce: 0.2
+  punchRagdollTime: 1
+  punchForce: 4.5
+  punchUpwardForce: 0.5
+  throwPoint: {fileID: 1114749276601652738}
+  bombForwardSpeed: 12
+  bombUpwardSpeed: 4
+  minePlaceDistance: 1
+  slideCooldown: 2.2
+  punchCooldown: 1
 --- !u!1 &3469225476297683797
 GameObject:
   m_ObjectHideFlags: 0
@@ -3576,8 +3513,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1375139801278413523}
   - component: {fileID: 7890507593243985739}
-  - component: {fileID: 588780359603081898}
-  - component: {fileID: 8106506913232594578}
   - component: {fileID: 3648779602253467211}
   m_Layer: 0
   m_Name: player mesh
@@ -3634,38 +3569,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &588780359603081898
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8327921954478951831}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51f9ba418f0d1d94d8e371dc706f6489, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CombatHitDetector
-  combatController: {fileID: 7990014476403455553}
-  punchHitPoint: {fileID: 1562109385062547707}
-  slideHitPoint: {fileID: 710402205275250706}
-  punchRadius: 0.8
-  slideRadius: 1
-  playerLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
---- !u!114 &8106506913232594578
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8327921954478951831}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4df80cec1fae6e74ba95740253c61423, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ThrowableAnimationEvents
 --- !u!114 &3648779602253467211
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4387,6 +4290,8 @@ MonoBehaviour:
   sensitivity: 0.15
   minPitch: -20
   maxPitch: 65
+  raceMinPitch: -35
+  raceMaxPitch: 60
   smoothSpeed: 12
   verticalSmoothSpeed: 12
   collisionLayers:

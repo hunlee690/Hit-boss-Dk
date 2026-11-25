@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1615082226770554387}
-  - component: {fileID: -5600910385813110475}
   - component: {fileID: 3873907127739817403}
   - component: {fileID: 4947218748223949216}
   m_Layer: 0
@@ -35,25 +34,6 @@ Transform:
   - {fileID: 897442775101243258}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 52.391, y: 12.529, z: -51.944}
---- !u!114 &-5600910385813110475
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6322852915340389648}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e86254f994b0c6e42a5ae7aedc55bab0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Bomb
-  impactExplosionDelay: 0.1
-  explosionRadius: 3
-  damage: 3
-  ragdollTime: 2.5
-  knockbackForce: 300
-  upwardForce: 100
-  explosionEffectPrefab: {fileID: 0}
 --- !u!54 &3873907127739817403
 Rigidbody:
   m_ObjectHideFlags: 0

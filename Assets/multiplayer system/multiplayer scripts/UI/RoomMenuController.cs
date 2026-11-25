@@ -50,8 +50,8 @@ namespace HitBoss.Multiplayer
             refreshButton.onClick.AddListener(() => _ = manager.RefreshAsync());
             friendsTab.onClick.AddListener(() => { showInvites = false; Render(); });
             invitesTab.onClick.AddListener(() => { showInvites = true; Render(); });
-            previousMode.onClick.AddListener(() => ChangeMode(-1));
-            nextMode.onClick.AddListener(() => ChangeMode(1));
+            if (previousMode != null) previousMode.gameObject.SetActive(false);
+            if (nextMode != null) nextMode.gameObject.SetActive(false);
             if (cancelMatchButton != null) cancelMatchButton.onClick.AddListener(CancelMatchmaking);
 
             window.SetActive(false);
@@ -147,14 +147,6 @@ namespace HitBoss.Multiplayer
                 waitingTime.text = manager.Status;
         }
 
-        void ChangeMode(int direction)
-        {
-            if (manager.modes.Length == 0) return;
-            selectedMode = (selectedMode + direction + manager.modes.Length) % manager.modes.Length;
-            if (manager.Room != null) _ = manager.SelectModeAsync(selectedMode);
-            else Render();
-        }
-
         static void Clear(Transform content)
         {
             foreach (Transform child in content) { child.gameObject.SetActive(false); Destroy(child.gameObject); }
@@ -176,7 +168,8 @@ namespace HitBoss.Multiplayer
 
             UpdateMatchmakingUI();
 
-            badge.text = manager.Invitations.Count > 0 ? manager.Invitations.Count + " invite(s)" : manager.Room != null ? "In room" : "";
+            if (badge != null)
+                badge.text = manager.Invitations.Count > 0 ? manager.Invitations.Count + " invite(s)" : manager.Room != null ? "In room" : "";
 
             if (!window.activeSelf) return;
 
@@ -187,15 +180,10 @@ namespace HitBoss.Multiplayer
 
             var selected = manager.modes.Length > 0 ? manager.modes[Mathf.Clamp(selectedMode, 0, manager.modes.Length - 1)] : null;
 
-            MultiplayerMap selectedMap = inRoom
-                ? manager.Map
-                : manager.MapsForMode(selectedMode).FirstOrDefault();
             modeText.text = selected != null
-                ? selected.displayName + "  •  " + selected.minPlayers + "–" + (inRoom ? Math.Min(selected.maxPlayers, room.MaxPlayers) : selected.maxPlayers) + " players" +
-                  (selectedMap != null ? "\nMAP: " + selectedMap.displayName : "")
+                ? selected.displayName + "  •  " + selected.minPlayers + "–" + (inRoom ? Math.Min(selected.maxPlayers, room.MaxPlayers) : selected.maxPlayers) + " players"
                 : "No modes configured";
 
-            previousMode.interactable = nextMode.interactable = !manager.Busy && (!inRoom || manager.IsHost && !manager.PublicMatch && !room.IsLocked);
             statusText.text = manager.Status;
 
             createArea.SetActive(!inRoom);

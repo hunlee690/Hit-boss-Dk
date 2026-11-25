@@ -44,10 +44,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1551bbf1d11f8524f8a2312624c89766, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HitBoss.Multiplayer.Skate.SkateMatchRules
-  staminaPickup: {fileID: 1411727217739491285, guid: 31ee53472a7b9da48a59de67b16c637f, type: 3}
-  bombPickup: {fileID: 6668593341925625352, guid: 11e054559ddbb734585b3ec063b7b8bb, type: 3}
-  minePickup: {fileID: 6886270121955080500, guid: 946e28f956c50b34da96793d2800be24, type: 3}
+  itemBox: {fileID: 6668593341925625352, guid: 11e054559ddbb734585b3ec063b7b8bb, type: 3}
   bomb: {fileID: 372438570037369826, guid: 3e44cd6f43907824c95baf05e6585a75, type: 3}
   mine: {fileID: 5962145395321937575, guid: c2fe25a114a69fa46b340891fce151da, type: 3}
-  matchDuration: 180
-  respawnDelay: 2
+  markerMaterial: {fileID: 2100000, guid: 5acb530d10feb1d45b2bb9cdf7929f4f, type: 2}
+  effectsMaterial: {fileID: 2100000, guid: 10571025cbee79d49814cfb8afecc9c4, type: 2}
+  trailMaterial: {fileID: 2100000, guid: ecac4655eb03f634fa0268d227b3140d, type: 2}
+  uiTheme: {fileID: 11400000, guid: f4fed728fec5e1e46874f093386ab9aa, type: 2}
+  pickupSound: {fileID: 8300000, guid: 2ab3d3069e016b24d999f8a2cbe8b3ad, type: 3}
+  respawnDelay: 0.75
+  baseSkateSpeed: 23
+  raceTimeoutSeconds: 240
+  maximumPackAssist: 1.2
+  maximumBotCatchupPace: 1.08
+  resultsDisplaySeconds: 12
+  maximumItemBoxes: 12
+  useScenePickupPoints: 1
+  itemBoxRespawnSeconds: 8
+  itemBoxRefillSeconds: 0.5
