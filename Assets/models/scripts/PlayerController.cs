@@ -146,9 +146,11 @@ public class PlayerController : MonoBehaviour
             if (Keyboard.current.spaceKey.wasPressedThisFrame && grounded && !jumping)
                 StartJump();
 
-            if (skateMode) ReadSkateInput();
-            else ReadNormalInput();
+            if (!skateMode) ReadNormalInput();
         }
+
+        if(skateMode)ReadSkateInput();
+        if(HitBoss.Multiplayer.Skate.MobileRaceControls.TakeJump()&&grounded&&!jumping)StartJump();
 
         UpdateAnimator();
     }
@@ -239,8 +241,9 @@ public class PlayerController : MonoBehaviour
     {
         skateTurnTarget = 0f;
 
-        if (Keyboard.current.aKey.isPressed) skateTurnTarget = -1f;
-        if (Keyboard.current.dKey.isPressed) skateTurnTarget = 1f;
+        if (Keyboard.current?.aKey.isPressed==true) skateTurnTarget = -1f;
+        if (Keyboard.current?.dKey.isPressed==true) skateTurnTarget = 1f;
+        if(HitBoss.Multiplayer.Skate.MobileRaceControls.Steering!=0)skateTurnTarget=HitBoss.Multiplayer.Skate.MobileRaceControls.Steering;
 
         float response = skateTurnTarget == 0f || skateTurnTarget * skateTurn < 0f
             ? steeringReturnSpeed : skateTurnSmooth;
@@ -251,7 +254,7 @@ public class PlayerController : MonoBehaviour
     {
         if (rb == null) return;
 
-        bool braking = Keyboard.current != null && Keyboard.current.sKey.isPressed;
+        bool braking = Keyboard.current != null && Keyboard.current.sKey.isPressed || HitBoss.Multiplayer.Skate.MobileRaceControls.Brake;
 
         float targetSpeed = braking ? -skateReverseSpeed : skateForwardSpeed;
         float acceleration = braking ? skateBrakeSpeed : skateAcceleration;

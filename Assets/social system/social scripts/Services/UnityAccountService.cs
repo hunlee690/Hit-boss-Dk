@@ -18,9 +18,8 @@ namespace HitBoss.Social
                 var options = new InitializationOptions().SetEnvironmentName(environment);
                 await (services ?? UnityServices.Instance).InitializeAsync(options);
             }
-            // Reuses Unity's cached session. Never clears tokens or silently creates a new account on an error.
-            if (!Auth.IsSignedIn)
-                await Auth.SignInAnonymouslyAsync();
+            if (!Auth.IsAuthorized)
+                throw new System.InvalidOperationException("Choose a login method before loading online data.");
         }
         public Task<string> GetNameAsync() => Auth.GetPlayerNameAsync();
         public Task<string> RenameAsync(string name) => Auth.UpdatePlayerNameAsync(name);

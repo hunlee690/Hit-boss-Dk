@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -17,6 +18,11 @@ namespace HitBoss.Multiplayer.Skate
         [SerializeField] TMP_Text[] statistics=new TMP_Text[3], podiumNames=new TMP_Text[3], podiumTimes=new TMP_Text[3];
         [SerializeField] Row[] standings, resultRows;
         [SerializeField] Material textMaterial;
+        [SerializeField,Range(4f,30f)] float standingsMoveSpeed=12f;
+        const int VisibleStandings=10;
+        readonly Dictionary<ulong,Row> standingsByRacer=new Dictionary<ulong,Row>();
+        readonly HashSet<Row> visibleStandingRows=new HashSet<Row>();
+        Vector2[] standingSlotMin,standingSlotMax;
         public Material TextMaterial => textMaterial;
         [System.Serializable] sealed class Row
         {
@@ -26,7 +32,7 @@ namespace HitBoss.Multiplayer.Skate
         }
 
         public void Bind(MatchHUD sceneHud,SkateMatchRules match)
-        {hud=sceneHud;rules=match;}
+        {hud=sceneHud;rules=match;CacheStandingSlots();}
 
         public void Initialize(RaceUITheme artwork, MatchHUD sceneHud, SkateMatchRules match, Transform canvas)
         {
@@ -50,6 +56,7 @@ namespace HitBoss.Multiplayer.Skate
 
             standingsRoot=Plate("Race standings",canvas,theme.leaderboard,new Vector2(.01f,.16f),new Vector2(.205f,.855f));
             standings=MakeRows(standingsRoot,false);
+            CacheStandingSlots();
             if(hud.rankingText!=null)hud.rankingText.text="";
             start=Picture("Race countdown artwork",canvas,null,new Vector2(.41f,.43f),new Vector2(.59f,.66f));start.enabled=false;
             spectating=Picture("Spectating icon",canvas,theme.spectator,new Vector2(.475f,.79f),new Vector2(.525f,.85f));spectating.enabled=false;
@@ -161,10 +168,57 @@ namespace HitBoss.Multiplayer.Skate
             if(emptyItem!=null)emptyItem.enabled=playing&&player.ItemCount.Value<=0;
             spectating.enabled=!results&&!paused&&player.HasFinishedRace&&!player.Finished.Value;
             var racers=SkateCombat.Players.Where(p=>p!=null&&p.IsSpawned).OrderBy(p=>p.RacePlace.Value<=0?int.MaxValue:p.RacePlace.Value).ThenBy(p=>p.NetworkObjectId).ToArray();
-            for(int i=0;i<standings.Length;i++)
+            AnimateStandings(racers,player);
+        }
+
+        void CacheStandingSlots()
+        {
+            if(standings==null)return;
+            int count=Mathf.Min(VisibleStandings,standings.Length);
+            standingSlotMin=new Vector2[count];standingSlotMax=new Vector2[count];
+            for(int i=0;i<count;i++)
             {
-                var row=standings[i];row.Root.gameObject.SetActive(i<racers.Length);if(i>=racers.Length)continue;
-                var racer=racers[i];bool mine=racer==player;
+                standingSlotMin[i]=standings[i].Root.anchorMin;
+                standingSlotMax[i]=standings[i].Root.anchorMax;
+            }
+            standingsByRacer.Clear();
+        }
+
+        void AnimateStandings(SkateCombat[] racers,SkateCombat player)
+        {
+            if(standings==null||standingSlotMin==null||standingSlotMin.Length==0)CacheStandingSlots();
+            if(standings==null||standingSlotMin==null)return;
+
+            var racerIds=new HashSet<ulong>(racers.Select(r=>r.NetworkObjectId));
+            foreach(var id in standingsByRacer.Keys.Where(id=>!racerIds.Contains(id)).ToArray())standingsByRacer.Remove(id);
+
+            var usedRows=new HashSet<Row>(standingsByRacer.Values);
+            for(int i=0;i<racers.Length&&i<standings.Length;i++)
+            {
+                ulong id=racers[i].NetworkObjectId;
+                if(standingsByRacer.ContainsKey(id))continue;
+                var free=standings.FirstOrDefault(row=>!usedRows.Contains(row));
+                if(free==null)break;
+                standingsByRacer[id]=free;usedRows.Add(free);
+            }
+
+            visibleStandingRows.Clear();
+            int visibleCount=Mathf.Min(VisibleStandings,Mathf.Min(racers.Length,standingSlotMin.Length));
+            float blend=1f-Mathf.Exp(-standingsMoveSpeed*Time.unscaledDeltaTime);
+            for(int i=0;i<visibleCount;i++)
+            {
+                var racer=racers[i];
+                if(!standingsByRacer.TryGetValue(racer.NetworkObjectId,out var row))continue;
+                bool wasVisible=row.Root.gameObject.activeSelf;
+                if(!wasVisible)row.Root.gameObject.SetActive(true);
+                visibleStandingRows.Add(row);
+
+                row.Root.anchorMin=wasVisible?Vector2.Lerp(row.Root.anchorMin,standingSlotMin[i],blend):standingSlotMin[i];
+                row.Root.anchorMax=wasVisible?Vector2.Lerp(row.Root.anchorMax,standingSlotMax[i],blend):standingSlotMax[i];
+                row.Root.anchoredPosition=Vector2.zero;row.Root.sizeDelta=Vector2.zero;
+                row.Root.SetSiblingIndex(i);
+
+                bool mine=racer==player;
                 row.Background.sprite=mine?theme.selectedRow:theme.row;
                 row.Rank.text=(racer.RacePlace.Value>0?racer.RacePlace.Value:i+1)+".";
                 row.Rank.color=mine?new Color(.16f,.07f,.02f):new Color(1,.88f,.2f);
@@ -172,6 +226,8 @@ namespace HitBoss.Multiplayer.Skate
                 row.Value.text=racer.Kills.Value+" K";
                 row.Tail.text=racer.HasFinishedRace?"DONE":racer.Finished.Value?"DNF":"LAP "+Mathf.Min(racer.CompletedLaps.Value+1,rules.RequiredLaps)+"/"+rules.RequiredLaps;
             }
+            foreach(var row in standings)
+                if(!visibleStandingRows.Contains(row)&&row.Root.gameObject.activeSelf)row.Root.gameObject.SetActive(false);
         }
 
         public void Results(SkateCombat player,SkateRaceResult[] rows,int secondsToMenu)

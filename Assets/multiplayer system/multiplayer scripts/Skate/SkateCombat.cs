@@ -217,16 +217,16 @@ namespace HitBoss.Multiplayer.Skate
             }
             if (IsOwner && !Player.IsBot.Value)
             {
-                bool heldNow = CanAct && !Player.IsPaused && Player.Skating.Value && Keyboard.current != null &&
-                    (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed) &&
-                    !Keyboard.current.sKey.isPressed;
+                bool heldNow = CanAct && !Player.IsPaused && Player.Skating.Value &&
+                    (MobileRaceControls.Boost || Keyboard.current!=null&&(Keyboard.current.leftShiftKey.isPressed||Keyboard.current.rightShiftKey.isPressed)) &&
+                    !MobileRaceControls.Brake && Keyboard.current?.sKey.isPressed!=true;
                 if (localBoostHeld != heldNow)
                 {
                     localBoostHeld = heldNow;
                     HoldBoostRpc(heldNow);
                 }
             }
-            if (IsOwner && !Player.IsBot.Value && !Player.IsPaused && CanAct && Mouse.current != null)
+            if (IsOwner && !Player.IsBot.Value && !Player.IsPaused && CanAct && Mouse.current != null && !Application.isMobilePlatform && !(UnityEngine.EventSystems.EventSystem.current?.IsPointerOverGameObject()??false))
             {
                 if (Mouse.current.leftButton.wasPressedThisFrame) RequestAttackRpc(0);
                 if (Mouse.current.rightButton.wasPressedThisFrame) RequestAttackRpc(1);
@@ -277,6 +277,14 @@ namespace HitBoss.Multiplayer.Skate
             bool usingReserve = requested && CanAct && Player.Skating.Value && Now >= BoostUntil.Value && BoostReserve.Value > 0f;
             ReserveBoosting.Value = usingReserve;
             if (usingReserve) BoostReserve.Value = Mathf.Max(0f, BoostReserve.Value - Time.fixedDeltaTime);
+        }
+        public void MobileAttack(byte action)
+        {if(IsSpawned&&IsOwner&&!Player.IsBot.Value&&CanAct&&!Player.IsPaused)RequestAttackRpc(action);}
+        public void MobileItem(bool held)
+        {
+            if(!IsSpawned||!IsOwner||Player.IsBot.Value)return;
+            if(held){if(!CanAct||Player.IsPaused||ItemCount.Value<=0)return;if(Item.Value==1)localChargeStart=Time.unscaledTime;ThrowButtonRpc(true,Vector3.zero);}
+            else if(IsChargingThrow)localReleasePending=true;
         }
         void LateUpdate()
         {
