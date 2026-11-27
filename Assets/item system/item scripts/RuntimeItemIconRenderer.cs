@@ -7,6 +7,7 @@ namespace HitBoss.Items
     {
         const int PreviewLayer = 31;
         static readonly Dictionary<string, Sprite[]> Cache = new Dictionary<string, Sprite[]>();
+        static readonly Dictionary<string, Sprite> WheelIcons = new Dictionary<string, Sprite>();
         static readonly Dictionary<string, PreviewDefinition> Definitions = new Dictionary<string, PreviewDefinition>();
         static PlayerCustomizationManager.ItemPreviewSettings settings = new PlayerCustomizationManager.ItemPreviewSettings();
 
@@ -48,19 +49,40 @@ namespace HitBoss.Items
             }
         }
 
-        public static void ConfigureAnimation(UnityEngine.UI.Image image, string itemId)
+        public static void ConfigureAnimation(UnityEngine.UI.Image image, string itemId, bool transparentBackground = false)
         {
             if (image == null) return;
             Cache.TryGetValue(itemId ?? string.Empty, out Sprite[] frames);
             ItemPreviewSpinner spinner = image.GetComponent<ItemPreviewSpinner>();
             if (spinner == null) spinner = image.gameObject.AddComponent<ItemPreviewSpinner>();
             if (Definitions.TryGetValue(itemId ?? string.Empty, out PreviewDefinition definition) &&
-                spinner.ConfigureLive(definition.sources, settings, definition.category))
+                spinner.ConfigureLive(definition.sources, settings, definition.category, transparentBackground))
                 return;
-            spinner.Configure(frames, settings.spinDegreesPerSecond, settings.clockwise);
+            spinner.Configure(transparentBackground && image.sprite != null ? new[] { image.sprite } : frames, settings.spinDegreesPerSecond, settings.clockwise);
         }
 
-        static Sprite[] Render(GameObject[] sources, string itemId, PlayerCustomizationManager.Category category)
+        public static Sprite GetWheelIcon(PlayerCustomizationManager manager, string itemId)
+        {
+            if (manager == null || string.IsNullOrEmpty(itemId)) return null;
+            if (WheelIcons.TryGetValue(itemId, out Sprite cached) && cached != null) return cached;
+            settings = manager.itemPreviewSettings ?? new PlayerCustomizationManager.ItemPreviewSettings();
+            var categories = new[] { manager.headAccessories, manager.body, manager.bags, manager.skates };
+            for (int c = 0; c < categories.Length; c++)
+            {
+                if (categories[c]?.items == null) continue;
+                foreach (var item in categories[c].items)
+                {
+                    if (item == null || item.itemId != itemId) continue;
+                    var frames = Render(item.objectsToEnable, itemId, (PlayerCustomizationManager.Category)c, true);
+                    Sprite icon = frames != null && frames.Length > 0 ? frames[0] : item.icon;
+                    if (icon != null) WheelIcons[itemId] = icon;
+                    return icon;
+                }
+            }
+            return null;
+        }
+
+        static Sprite[] Render(GameObject[] sources, string itemId, PlayerCustomizationManager.Category category, bool transparent = false)
         {
             if (sources == null || sources.Length == 0) return null;
 
@@ -131,7 +153,8 @@ namespace HitBoss.Items
             camera.clearFlags = CameraClearFlags.SolidColor;
             // An opaque background prevents the menu character behind the UI
             // from showing through the empty pixels of the item image.
-            camera.backgroundColor = settings.backgroundColor;
+            camera.backgroundColor = transparent ? Color.clear : settings.backgroundColor;
+            camera.allowHDR = false;
             camera.orthographic = false;
             camera.fieldOfView = Mathf.Clamp(settings.fieldOfView, 15f, 60f);
             camera.nearClipPlane = .01f;

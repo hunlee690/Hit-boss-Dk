@@ -40,6 +40,8 @@ namespace HitBoss.Items.Editor
             EditorGUILayout.PropertyField(rewardLabelPrefab);
             EditorGUILayout.PropertyField(spinButton);
             EditorGUILayout.PropertyField(spinButtonText);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("coinRewardIcon"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("gemRewardIcon"));
             EditorGUILayout.PropertyField(animationSeconds);
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Main Menu Spin Buttons", EditorStyles.boldLabel);

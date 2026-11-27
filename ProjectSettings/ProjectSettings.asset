@@ -928,11 +928,11 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 1
   windowsGamepadBackendHint: 0
-  cloudProjectId: be94cacf-e340-4876-a27b-010fde25a520
+  cloudProjectId: d1e43084-437d-4311-a82d-7ab10ff2ed1e
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
   projectName: Hit boss Dk
-  organizationId: unity_ff52630469774ff6225f
+  organizationId: provizel
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}

@@ -15,22 +15,22 @@ namespace HitBoss.Items
 
         public void Setup(ShopManager owner, ShopManager.ShopOffer offer, ItemManager.CatalogItem item, bool owned)
         {
-            if (itemName != null) itemName.text = item.name;
+            if (itemName != null) itemName.text = item.name.ToUpperInvariant();
             if (icon == null)
                 icon = GetComponentsInChildren<Image>(true).FirstOrDefault(image =>
                     image.gameObject != gameObject &&
                     (image.name.ToLowerInvariant().Contains("icon") || image.name.ToLowerInvariant().Contains("preview")));
             if (icon != null)
             {
-                icon.sprite = item.icon;
+                icon.sprite = RuntimeItemIconRenderer.GetWheelIcon(owner.customization, item.id) ?? item.icon;
                 icon.type = Image.Type.Simple;
                 icon.preserveAspect = true;
                 icon.color = Color.white;
                 icon.raycastTarget = false;
-                icon.gameObject.SetActive(item.icon != null);
-                RuntimeItemIconRenderer.ConfigureAnimation(icon, item.id);
+                icon.gameObject.SetActive(icon.sprite != null);
+                RuntimeItemIconRenderer.ConfigureAnimation(icon, item.id, true);
             }
-            if (priceText != null) priceText.text = owned ? "OWNED" : offer.price.ToString("N0") + (offer.currency == ShopCurrency.Coins ? " COINS" : " GEMS");
+            if (priceText != null) { priceText.text = owned ? "IN YOUR COLLECTION" : offer.price.ToString("N0") + (offer.currency == ShopCurrency.Coins ? " COINS" : " GEMS"); priceText.color = owned ? new Color(.4f,1f,.7f) : new Color(1f,.9f,.4f); }
             if (buyButtonText != null) buyButtonText.text = owned ? "OWNED" : "BUY";
             if (buyButton != null)
             {

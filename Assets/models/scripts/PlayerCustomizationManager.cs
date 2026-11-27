@@ -17,10 +17,12 @@ public class PlayerCustomizationManager : MonoBehaviour
     public class CustomizationItem
     {
         [Tooltip("Stable save ID. Do not change it after players own this item.")]
+        [HideInInspector]
         public string itemId;
         public string itemName;
 
-        [Tooltip("Optional. Button still works without an icon.")]
+        // Automatically generated from the model; never configured or saved by hand.
+        [System.NonSerialized]
         public Sprite icon;
 
         [Tooltip("Tick ONE item per category if it should start equipped. A category with a default item can never become empty.")]
