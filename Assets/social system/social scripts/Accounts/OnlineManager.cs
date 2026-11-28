@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using HitBoss.Authentication;
 
 namespace HitBoss.Social
 {
@@ -30,7 +31,15 @@ namespace HitBoss.Social
             DontDestroyOnLoad(gameObject);
             SceneManager.sceneLoaded += SceneLoaded;
         }
-        async void Start() { await ConnectAsync(); }
+        async void Start()
+        {
+            if (AuthenticationManager.Instance == null) { SetStatus("Account system is missing."); return; }
+            AuthenticationManager.Instance.Authenticated += AuthenticationReady;
+            AuthenticationManager.Instance.SignedOut += ResetForAccountChange;
+            if (AuthenticationManager.Instance.Ready) await ConnectAsync();
+            else SetStatus("Waiting for login...");
+        }
+        async void AuthenticationReady() { ResetForAccountChange(); await ConnectAsync(); }
         public async Task ConnectAsync()
         {
             if (Busy) return;
@@ -98,12 +107,28 @@ namespace HitBoss.Social
             Debug.LogWarning("[Social] " + e);
             SetStatus(e is ArgumentException || e is InvalidOperationException ? e.Message : "Could not reach online services. Please try again.");
         }
+        public void ResetForAccountChange()
+        {
+            if (Profiles != null) Profiles.Changed -= ProfileChanged;
+            if (Friends != null) { Friends.Changed -= Notify; Friends.Dispose(); }
+            Profiles = null;
+            Friends = null;
+            Account = null;
+            Busy = false;
+            saving = false;
+            SetStatus("Waiting for login...");
+        }
         void OnDestroy()
         {
             if (Instance != this) return;
             SceneManager.sceneLoaded -= SceneLoaded;
             if (Profiles != null) Profiles.Changed -= ProfileChanged;
             if (Friends != null) { Friends.Changed -= Notify; Friends.Dispose(); }
+            if (AuthenticationManager.Instance != null)
+            {
+                AuthenticationManager.Instance.Authenticated -= AuthenticationReady;
+                AuthenticationManager.Instance.SignedOut -= ResetForAccountChange;
+            }
             Instance = null;
         }
     }

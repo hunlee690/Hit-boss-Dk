@@ -41,6 +41,9 @@ namespace HitBoss.Items
         public TMP_Text rewardLabelPrefab;
         public Button spinButton;
         public TMP_Text spinButtonText;
+        [Header("Wheel Reward Icons")]
+        public Sprite coinRewardIcon;
+        public Sprite gemRewardIcon;
         public float animationSeconds = 2.5f;
         public List<SpinDefinition> spins = new List<SpinDefinition>();
         [Tooltip("Spin opened by the Daily Spin button. Configure the spin itself below.")]
@@ -159,6 +162,7 @@ namespace HitBoss.Items
             bool granted = ItemManager.Instance != null && ItemManager.Instance.TrySpinReward(itemId, coins, gems, definition.currency, definition.cost, out message);
             spinning = false;
             Refresh();
+            if (wheel != null) wheel.localRotation = Quaternion.Euler(0, 0, landingAngle);
             SetResult(granted ? duplicate ? "DUPLICATE " + rewardName + ": +" + coins.ToString("N0") + " COINS" : "YOU WON: " + rewardName : message);
         }
 
@@ -212,21 +216,55 @@ namespace HitBoss.Items
                 var image = segmentObject.GetComponent<Image>();
                 image.sprite = sprite; image.type = Image.Type.Filled; image.fillMethod = Image.FillMethod.Radial360;
                 image.fillOrigin = 2; image.fillClockwise = true; image.fillAmount = 1f / rewards.Count;
-                image.color = Color.HSVToRGB(Mathf.Repeat(.58f + i * .13f, 1f), .64f, .9f);
+                Color[] palette = { new Color(.16f,.38f,.85f), new Color(.48f,.18f,.8f), new Color(.05f,.65f,.72f), new Color(.9f,.38f,.14f), new Color(.72f,.16f,.55f), new Color(.16f,.65f,.38f) };
+                image.color = palette[i % palette.Length];
                 image.raycastTarget = false;
                 generatedWheelObjects.Add(segmentObject);
 
                 TMP_Text label = rewardLabelPrefab != null ? Instantiate(rewardLabelPrefab, wheel) : CreateRuntimeLabel();
                 label.gameObject.SetActive(true);
                 label.name = "Reward " + (i + 1);
-                label.text = RewardName(rewards[i]);
+                // Item visuals replace names; currency keeps only its amount.
+                label.text = rewards[i].rewardType == SpinRewardType.Item ? "" : rewards[i].amount.ToString("N0");
                 float center = (i + .5f) * angle * Mathf.Deg2Rad;
                 label.rectTransform.anchorMin = label.rectTransform.anchorMax = new Vector2(.5f, .5f);
-                label.rectTransform.sizeDelta = new Vector2(100, 42);
-                label.rectTransform.anchoredPosition = new Vector2(Mathf.Sin(center), Mathf.Cos(center)) * 72f;
+                float diameter = Mathf.Min(wheel.rect.width, wheel.rect.height);
+                label.rectTransform.sizeDelta = new Vector2(diameter * .32f, diameter * .16f);
+                label.rectTransform.anchoredPosition = new Vector2(Mathf.Sin(center), Mathf.Cos(center)) * diameter * .29f;
+                label.enableAutoSizing = true;
+                label.fontSizeMin = 9; label.fontSizeMax = 17;
+                label.fontStyle = FontStyles.Bold;
                 label.rectTransform.localRotation = Quaternion.Euler(0, 0, -((i + .5f) * angle));
                 label.transform.SetAsLastSibling();
                 generatedWheelObjects.Add(label.gameObject);
+
+                var reward = rewards[i];
+                Sprite rewardSprite = reward.rewardType == SpinRewardType.Coins ? coinRewardIcon
+                    : reward.rewardType == SpinRewardType.Gems ? gemRewardIcon
+                    : RuntimeItemIconRenderer.GetWheelIcon(customization, reward.itemId) ?? ItemManager.Instance?.Find(reward.itemId)?.icon;
+                var iconObject = new GameObject("Reward Preview " + (i + 1), typeof(RectTransform), typeof(CanvasRenderer), typeof(UnityEngine.UI.Image));
+                iconObject.layer = wheel.gameObject.layer;
+                iconObject.transform.SetParent(wheel, false);
+                var icon = iconObject.GetComponent<UnityEngine.UI.Image>();
+                icon.sprite = rewardSprite;
+                icon.preserveAspect = true;
+                icon.raycastTarget = false;
+                icon.color = rewardSprite != null ? Color.white : Color.clear;
+                var iconRect = icon.rectTransform;
+                iconRect.anchorMin = iconRect.anchorMax = new Vector2(.5f, .5f);
+                float iconSize = rewards.Count <= 2 ? diameter * .24f : Mathf.Min(diameter * .24f, diameter * .50f * Mathf.Sin(angle * .5f * Mathf.Deg2Rad));
+                iconSize = Mathf.Clamp(iconSize, 14f, diameter * .24f);
+                iconRect.sizeDelta = Vector2.one * iconSize;
+                iconRect.anchoredPosition = label.rectTransform.anchoredPosition;
+                // Upright artwork at rest, rotating together with its reward sector.
+                iconRect.localRotation = Quaternion.identity;
+                if (reward.rewardType != SpinRewardType.Item)
+                {
+                    label.rectTransform.localRotation = Quaternion.identity;
+                    label.rectTransform.anchoredPosition -= new Vector2(0, iconSize * .64f);
+                    label.rectTransform.sizeDelta = new Vector2(iconSize * 1.5f, 22f);
+                }
+                generatedWheelObjects.Add(iconObject);
             }
             if (rewardLabelPrefab != null) rewardLabelPrefab.gameObject.SetActive(false);
         }

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Rendering.Universal;
 
 namespace HitBoss.Items
 {
@@ -27,17 +28,20 @@ namespace HitBoss.Items
         PlayerCustomizationManager.Category liveCategory;
         Vector3 liveStageCenter;
         float liveRadius;
+        bool transparentBackground;
 
         public bool ConfigureLive(
             GameObject[] sources,
             PlayerCustomizationManager.ItemPreviewSettings settings,
-            PlayerCustomizationManager.Category category)
+            PlayerCustomizationManager.Category category,
+            bool transparent = false)
         {
             image = GetComponent<Image>();
             if (image == null || sources == null || sources.Length == 0 || settings == null)
                 return false;
 
             CleanupLivePreview();
+            transparentBackground = transparent;
             degreesPerSecond = Mathf.Max(0f, settings.spinDegreesPerSecond);
             clockwise = settings.clockwise;
             baseColor = image.color;
@@ -109,9 +113,12 @@ namespace HitBoss.Items
             previewCamera.enabled = false;
             previewCamera.cullingMask = 1 << PreviewLayer;
             previewCamera.clearFlags = CameraClearFlags.SolidColor;
-            previewCamera.backgroundColor = settings.backgroundColor;
+            previewCamera.backgroundColor = transparentBackground ? Color.clear : settings.backgroundColor;
             previewCamera.orthographic = false;
             previewCamera.allowHDR = false;
+            var cameraData = previewCamera.GetUniversalAdditionalCameraData();
+            cameraData.renderPostProcessing = false;
+            cameraData.antialiasing = AntialiasingMode.None;
             previewCamera.fieldOfView = Mathf.Clamp(settings.fieldOfView, 15f, 60f);
             previewCamera.nearClipPlane = .01f;
 
@@ -218,7 +225,7 @@ namespace HitBoss.Items
         {
             if (previewCamera == null || liveSettings == null) return;
 
-            previewCamera.backgroundColor = liveSettings.backgroundColor;
+            previewCamera.backgroundColor = transparentBackground ? Color.clear : liveSettings.backgroundColor;
             previewCamera.fieldOfView = Mathf.Clamp(liveSettings.fieldOfView, 15f, 60f);
             float distance = Mathf.Max(.5f,
                 liveRadius * Mathf.Max(2f, liveSettings.Distance(liveCategory)) /

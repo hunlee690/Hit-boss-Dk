@@ -58,23 +58,10 @@ namespace HitBoss.Multiplayer.Skate
             banner.gameObject.SetActive(false);
             slide = Ability("SLIDE · LMB", 0, out slideCover);
             punch = Ability("PUNCH · RMB", 1, out punchCover);
-            var itemRoot = Panel("Item indicator", canvas, new Vector2(.015f,.165f), new Vector2(.20f,.23f), new Color(.03f,.07f,.12f,.85f));
-            if(rules.uiTheme!=null)Anchor(itemRoot,new Vector2(.80f,.89f),new Vector2(.99f,.985f));
-            item = Label("Item count", itemRoot, new Vector2(.3f,0), Vector2.one, 16);
-            var image = new GameObject("Item icon", typeof(RectTransform), typeof(UnityEngine.UI.Image));
-            image.transform.SetParent(itemRoot,false); itemIcon = image.GetComponent<UnityEngine.UI.Image>();
-            Anchor(itemIcon.rectTransform, Vector2.zero, new Vector2(.3f,1)); itemIcon.raycastTarget = false;
-            itemIcon.preserveAspect = true;
-            bombIcon=Icon(0);mineIcon=Icon(1);
             if (rules.uiTheme != null)
             {
                 artwork=gameObject.AddComponent<RaceHUDArtwork>();
                 artwork.Initialize(rules.uiTheme,hud,rules,canvas);
-                RaceHUDArtwork.Skin(itemRoot,rules.uiTheme.purpleButton);
-                var frame=RaceHUDArtwork.Picture("Item slot",itemRoot,rules.uiTheme.iconFrame,new Vector2(.025f,.08f),new Vector2(.26f,.92f));
-                frame.transform.SetAsFirstSibling();
-                Anchor(itemIcon.rectTransform,new Vector2(.06f,.16f),new Vector2(.23f,.84f));
-                itemIcon.transform.SetAsLastSibling();
             }
 
             if (hud.endPanel == null || hud.resultText == null) return;
@@ -164,7 +151,6 @@ namespace HitBoss.Multiplayer.Skate
             controlsVisible = visible;
             slideCover.parent.gameObject.SetActive(visible);
             punchCover.parent.gameObject.SetActive(visible);
-            itemIcon.transform.parent.gameObject.SetActive(showItem);
             if (!visible && banner != null) banner.gameObject.SetActive(false);
         }
 
@@ -210,9 +196,6 @@ namespace HitBoss.Multiplayer.Skate
                 punchCover.anchorMax=new Vector2(Mathf.Clamp01(local.CooldownFraction(1)),1);
                 slide.text="SLIDE · LMB"+(slideWait>.01f?"  "+slideWait.ToString("F1")+"s":"  READY");
                 punch.text="PUNCH · RMB"+(punchWait>.01f?"  "+punchWait.ToString("F1")+"s":"  READY");
-                int kind=local.Item.Value;
-                item.text=kind==1?"BOMB ×"+local.ItemCount.Value+" · HOLD MMB":kind==2?"MINES ×"+local.ItemCount.Value+" · CLICK MMB":artwork!=null?"":"ITEM EMPTY";
-                itemIcon.enabled=kind>0;itemIcon.sprite=kind==2?mineIcon:bombIcon;
             }
             for (int i=confetti.Count-1;i>=0;i--)
             {

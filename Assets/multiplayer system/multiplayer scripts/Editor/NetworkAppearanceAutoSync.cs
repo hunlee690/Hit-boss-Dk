@@ -221,7 +221,6 @@ namespace HitBoss.Multiplayer.Editor
                 {
                     itemId = sourceItem?.itemId ?? "",
                     itemName = sourceItem?.itemName ?? "",
-                    icon = sourceItem?.icon,
                     equippedByDefault = sourceItem?.equippedByDefault == true,
                     objectsToEnable = targetObjects
                 };
@@ -234,7 +233,17 @@ namespace HitBoss.Multiplayer.Editor
             if (sourceObject == null) return null;
             string path = AnimationUtility.CalculateTransformPath(sourceObject.transform, sourceRoot);
             var existing = targetRoot.Find(path);
-            if (existing != null) return existing.gameObject;
+            if (existing != null)
+            {
+                foreach (var renderer in sourceObject.GetComponentsInChildren<Renderer>(true))
+                {
+                    string rendererPath = AnimationUtility.CalculateTransformPath(renderer.transform, sourceObject.transform);
+                    var mapped = string.IsNullOrEmpty(rendererPath) ? existing : existing.Find(rendererPath);
+                    var targetRenderer = mapped != null ? mapped.GetComponent<Renderer>() : null;
+                    if (targetRenderer != null) targetRenderer.sharedMaterials = renderer.sharedMaterials;
+                }
+                return existing.gameObject;
+            }
 
             string parentPath = AnimationUtility.CalculateTransformPath(sourceObject.transform.parent, sourceRoot);
             var parent = string.IsNullOrEmpty(parentPath) ? targetRoot : targetRoot.Find(parentPath);
@@ -312,10 +321,14 @@ namespace HitBoss.Multiplayer.Editor
     [CustomEditor(typeof(PlayerCustomizationManager))]
     public sealed class PlayerCustomizationManagerEditor : UnityEditor.Editor
     {
+        readonly HitBoss.Items.Editor.ItemVariantControls itemControls = new HitBoss.Items.Editor.ItemVariantControls();
         void OnEnable() => NetworkAppearanceAutoSync.Schedule((PlayerCustomizationManager)target);
+        void OnDisable() => itemControls.Dispose();
 
         public override void OnInspectorGUI()
         {
+            itemControls.Draw((PlayerCustomizationManager)target);
+            serializedObject.Update();
             EditorGUI.BeginChangeCheck();
             DrawDefaultInspector();
             if (EditorGUI.EndChangeCheck()) NetworkAppearanceAutoSync.Schedule((PlayerCustomizationManager)target);

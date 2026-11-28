@@ -101,9 +101,10 @@ public class PlayerCamera : MonoBehaviour
     {
         float blend = 1f - Mathf.Exp(-smoothSpeed * Time.deltaTime);
         yaw = Mathf.LerpAngle(yaw, target.eulerAngles.y, blend);
-        if (readLook && Cursor.lockState == CursorLockMode.Locked && Mouse.current != null)
+        if (readLook)
         {
-            Vector2 mouse = Mouse.current.delta.ReadValue();
+            Vector2 mouse = HitBoss.Multiplayer.Skate.MobileRaceControls.TakeLook();
+            if(!Application.isMobilePlatform&&Cursor.lockState==CursorLockMode.Locked&&Mouse.current!=null&&!(UnityEngine.EventSystems.EventSystem.current?.IsPointerOverGameObject()??false))mouse+=Mouse.current.delta.ReadValue();
             if (mouse.sqrMagnitude > .01f)
             {
                 raceLookYaw = Mathf.DeltaAngle(0, raceLookYaw + mouse.x * sensitivity);
